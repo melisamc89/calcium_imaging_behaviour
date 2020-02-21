@@ -16,31 +16,42 @@ import numpy as np
 import pickle
 import datetime
 
-mouse = 56165
-session = 4
-min_event_duration = 100
-
 current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
-mice_directory = '56165-56166/'
-file_name = current_directory + mice_directory + 'Mouse_c57bl6_session_'+f'{session}' +'_log.xlsx'
+mice_directory = '32363-32366/'
+mouse = 32363
+session = 1
+min_event_duration = 20
 
-file_structure = ['wall_time', 'trial_time', 'frame', 'sequence_nr', 'type', 'start_stop']
-table = pd.read_excel(file_name)
-table = pd.DataFrame(table,columns=file_structure)
-events_type = ['TR', 'LR', 'LL', 'UR', 'UL']
-start_frame = np.zeros((1,42))
-type_of_event = []
-
-
-file_list = current_directory + mice_directory + 'Mouse_c57bl6_filelist.xlsx'
+## initial file that conteins mouse, session, trial, resting, and timestramp information. This table conteins all mice info
+list_file_name = current_directory + 'mouse_filelist.xlsx'
 file_list_structure = ['condition', 'session' , 'mouse', 'date' , 'timestamp','is_rest','trial']
-data = pd.read_excel(file_list)
+data = pd.read_excel(list_file_name)
 data = pd.DataFrame(data,columns=file_list_structure)
 current_data = data.query('mouse == ' + f'{mouse}')
 current_data = current_data.query('session == ' + f'{session}')
 initial_time = current_data['timestamp']
 
-mouse_sequence = [1,2,3,4,5,11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41]
+### log file that conteins scoring
+log_file_name = current_directory + mice_directory + 'mouse_training_OS_calcium_'+f'{session}' +'_log.xlsx'
+file_structure = ['wall_time', 'trial_time', 'frame', 'sequence_nr', 'type', 'start_stop']
+table_log = pd.read_excel(log_file_name)
+table_log = pd.DataFrame(table_log,columns=file_structure)
+events_type = ['TR', 'LR', 'LL', 'UR', 'UL']
+start_frame = np.zeros((1,42))
+type_of_event = []
+
+
+## results file from where sequence infomation is taken
+
+path_results = current_directory + mice_directory + 'mouse_training_OS_calcium_'+f'{session}' +'_results.xlsx'
+results_file = pd.read_excel(path_results)
+mouse_sequence = []
+for i in range(len(results_file)):
+    x= results_file.iloc[i]['subject']
+    y = results_file.iloc[i]['session']
+    if x == mouse and y == session:
+        mouse_sequence.append(results_file.iloc[i]['sequence_nr'])
+
 session_trial = np.arange(1,22)
 
 event = []
@@ -48,10 +59,10 @@ boolean = []
 frame = []
 trial = []
 counter = 0
-for i in range(len(table)):
-    if table.iloc[i]['sequence_nr'] in mouse_sequence:
-        if table.iloc[i]['trial_time'] == 0:
-            time_val = int(table.iloc[i]['wall_time'])
+for i in range(len(table_log)):
+    if table_log.iloc[i]['sequence_nr'] in mouse_sequence:
+        if table_log.iloc[i]['trial_time'] == 0:
+            time_val = int(table_log.iloc[i]['wall_time'])
             time_convert = datetime.datetime.fromtimestamp(time_val)
             hour = time_convert.hour
             minutes = time_convert.minute
@@ -62,21 +73,21 @@ for i in range(len(table)):
             total_sec_calcium = int(time_calcium[-2:]) + int(time_calcium[-4:-2]) * 60 + int(time_calcium[:-4]) * 360
             counter += 1
             sync_diff = round((total_sec_calcium - total_sec_behaviour) / 60)
-        new_frame = int((table.iloc[i]['trial_time']-sync_diff)*10)
+        new_frame = int((table_log.iloc[i]['trial_time']-sync_diff)*10)
         if new_frame > 0:
             frame.append(new_frame)
-            index = mouse_sequence.index(table.iloc[i]['sequence_nr'])
+            index = mouse_sequence.index(table_log.iloc[i]['sequence_nr'])
             trial.append(index + 1)
-            event.append(table.iloc[i]['type'])
-            boolean.append(table.iloc[i]['start_stop'])
+            event.append(table_log.iloc[i]['type'])
+            boolean.append(table_log.iloc[i]['start_stop'])
 
 
 
 ## load source extracted calcium traces
 file_directory = os.environ['PROJECT_DIR'] + 'data/calcium_activity/'
-file_name = 'mouse_56165_session_4_trial_1_v1.4.100.1.0.1.1.1.npy'
+file_name = 'mouse_56165_session_2_trial_1_v1.4.100.1.0.1.1.1.npy'
 timeline_file_dir = os.environ['PROJECT_DIR'] + 'data/timeline/'
-timeline_file_path = timeline_file_dir +  'mouse_56165_session_4_trial_1_v1.1.1.0.pkl'
+timeline_file_path = timeline_file_dir +  'mouse_56165_session_2_trial_1_v1.1.1.0.pkl'
 
 activity = np.load(file_directory + file_name)
 timeline_file= open(timeline_file_path,'rb')
@@ -120,6 +131,6 @@ for i in range(len(behavioural_vector)):
     behaviour[int(timeline[2*i]):int(timeline[2*i+1])] = behavioural_vector[i]
 
 directory = os.environ['PROJECT_DIR'] + '/data/scoring_time_vector/'
-file_name = 'mouse_56165_session_4.npy'
+file_name = 'mouse_56165_session_3.npy'
 np.save(directory + file_name, behaviour)
 
