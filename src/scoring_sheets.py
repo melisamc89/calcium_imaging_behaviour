@@ -1,13 +1,8 @@
 '''
-
 Created on Fri 07 Feb 2020
-
 Author: Melisa
-
 Lets try to create a behavioural timeline (with the scoring) syncronized with the calcium videos.
-
 '''
-
 
 import os
 import src.configuration
@@ -17,8 +12,8 @@ import pickle
 import datetime
 
 mouse = 56165
-session = 4
-min_event_duration = 100
+session = 1
+min_event_duration = 20
 
 current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
 mice_directory = '56165-56166/'
@@ -40,7 +35,13 @@ current_data = data.query('mouse == ' + f'{mouse}')
 current_data = current_data.query('session == ' + f'{session}')
 initial_time = current_data['timestamp']
 
-mouse_sequence = [1,2,3,4,5,11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41]
+##for 56165
+if mouse == 56165:
+    mouse_sequence = [1,2,3,4,5,11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41]
+##for 56166
+if mouse == 56166:
+    mouse_sequence = [6,7,8,9,10,16,17,18,19,20,26,27,28,29,30,36,37,38,39,40,42]
+
 session_trial = np.arange(1,22)
 
 event = []
@@ -74,9 +75,9 @@ for i in range(len(table)):
 
 ## load source extracted calcium traces
 file_directory = os.environ['PROJECT_DIR'] + 'data/calcium_activity/'
-file_name = 'mouse_56165_session_4_trial_1_v1.4.100.1.0.1.1.1.npy'
+file_name = 'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.4.100.1.0.1.1.1.npy'
 timeline_file_dir = os.environ['PROJECT_DIR'] + 'data/timeline/'
-timeline_file_path = timeline_file_dir +  'mouse_56165_session_4_trial_1_v1.1.1.0.pkl'
+timeline_file_path = timeline_file_dir +  'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.1.1.0.pkl'
 
 activity = np.load(file_directory + file_name)
 timeline_file= open(timeline_file_path,'rb')
@@ -120,6 +121,6 @@ for i in range(len(behavioural_vector)):
     behaviour[int(timeline[2*i]):int(timeline[2*i+1])] = behavioural_vector[i]
 
 directory = os.environ['PROJECT_DIR'] + '/data/scoring_time_vector/'
-file_name = 'mouse_56165_session_4.npy'
+file_name = 'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_event_'+f'{min_event_duration}' +'.npy'
 np.save(directory + file_name, behaviour)
 

@@ -19,7 +19,7 @@ import datetime
 current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
 mice_directory = '32363-32366/'
 mouse = 32363
-session = 1
+session = 2
 min_event_duration = 20
 
 ## initial file that conteins mouse, session, trial, resting, and timestramp information. This table conteins all mice info
@@ -83,11 +83,12 @@ for i in range(len(table_log)):
 
 
 
+
 ## load source extracted calcium traces
 file_directory = os.environ['PROJECT_DIR'] + 'data/calcium_activity/'
-file_name = 'mouse_56165_session_2_trial_1_v1.4.100.1.0.1.1.1.npy'
+file_name = 'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.4.100.1.0.1.1.1.npy'
 timeline_file_dir = os.environ['PROJECT_DIR'] + 'data/timeline/'
-timeline_file_path = timeline_file_dir +  'mouse_56165_session_2_trial_1_v1.1.1.0.pkl'
+timeline_file_path = timeline_file_dir +  'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.1.1.0.pkl'
 
 activity = np.load(file_directory + file_name)
 timeline_file= open(timeline_file_path,'rb')
@@ -131,6 +132,6 @@ for i in range(len(behavioural_vector)):
     behaviour[int(timeline[2*i]):int(timeline[2*i+1])] = behavioural_vector[i]
 
 directory = os.environ['PROJECT_DIR'] + '/data/scoring_time_vector/'
-file_name = 'mouse_56165_session_3.npy'
+file_name = 'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_event_'+f'{min_event_duration}' +'.npy'
 np.save(directory + file_name, behaviour)
 
