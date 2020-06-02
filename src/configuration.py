@@ -1,20 +1,12 @@
 import os
 
 #%% ENVIRONMENT VARIABLES
-os.environ['PROJECT_DIR_LOCAL'] = '/home/sebastian/Documents/Melisa/calcium_imaging_behaviour/'
-os.environ['DATA_DIR_LOCAL'] ='/home/sebastian/Documents/Melisa/calcium_imaging_behaviour/data/'
-os.environ['DATA_DIR_SERVER'] ='/scratch/melisa/neural_analsysis/'
+os.environ['PROJECT_DIR_LOCAL'] = '/home/melisa/Documents/calcium_imaging_behaviour/'
+os.environ['DATA_DIR_LOCAL'] ='/home/melisa/Documents/calcium_imaging_behaviour/data/'
 
-os.environ['CAIMAN_ENV_SERVER'] = '/memdym/melisa/caiman/bin/python'
-
-os.environ['LOCAL_USER'] = 'sebastian'
-os.environ['SERVER_USER'] = 'mmaidana'
-os.environ['SERVER_HOSTNAME'] = 'cn43'
+os.environ['LOCAL_USER'] = 'melisa'
 os.environ['ANALYST'] = 'Meli'
 
-#%% PROCESSING
-os.environ['LOCAL'] = str((os.getlogin() == os.environ['LOCAL_USER']))
-os.environ['SERVER'] = str(not(eval(os.environ['LOCAL'])))
 
-os.environ['PROJECT_DIR'] = os.environ['PROJECT_DIR_LOCAL'] if eval(os.environ['LOCAL']) else os.environ['PROJECT_DIR_SERVER']
-os.environ['DATA_DIR'] = os.environ['DATA_DIR_LOCAL'] if eval(os.environ['LOCAL']) else os.environ['DATA_DIR_SERVER']
+os.environ['PROJECT_DIR'] = os.environ['PROJECT_DIR_LOCAL']
+os.environ['DATA_DIR'] = os.environ['DATA_DIR_LOCAL']

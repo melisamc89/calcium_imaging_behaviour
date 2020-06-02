@@ -18,9 +18,9 @@ import datetime
 
 current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
 mice_directory = '32363-32366/'
-mouse = 32363
+mouse = 32365
 session = 2
-min_event_duration = 20
+min_event_duration = 50
 
 ## initial file that conteins mouse, session, trial, resting, and timestramp information. This table conteins all mice info
 list_file_name = current_directory + 'mouse_filelist.xlsx'
@@ -32,7 +32,7 @@ current_data = current_data.query('session == ' + f'{session}')
 initial_time = current_data['timestamp']
 
 ### log file that conteins scoring
-log_file_name = current_directory + mice_directory + 'mouse_training_OS_calcium_'+f'{session}' +'_log.xlsx'
+log_file_name = current_directory + mice_directory + 'mouse_training_OS_calcium_1_log.xlsx'
 file_structure = ['wall_time', 'trial_time', 'frame', 'sequence_nr', 'type', 'start_stop']
 table_log = pd.read_excel(log_file_name)
 table_log = pd.DataFrame(table_log,columns=file_structure)
@@ -43,7 +43,7 @@ type_of_event = []
 
 ## results file from where sequence infomation is taken
 
-path_results = current_directory + mice_directory + 'mouse_training_OS_calcium_'+f'{session}' +'_results.xlsx'
+path_results = current_directory + mice_directory + 'mouse_training_OS_calcium_1_results.xlsx'
 results_file = pd.read_excel(path_results)
 mouse_sequence = []
 for i in range(len(results_file)):
@@ -88,16 +88,16 @@ for i in range(len(table_log)):
 file_directory = os.environ['PROJECT_DIR'] + 'data/calcium_activity/'
 file_name = 'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.4.100.1.0.1.1.1.npy'
 timeline_file_dir = os.environ['PROJECT_DIR'] + 'data/timeline/'
-timeline_file_path = timeline_file_dir +  'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.1.1.0.pkl'
+timeline_file_path = timeline_file_dir +  'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.4.1.0.pkl'
 
 activity = np.load(file_directory + file_name)
 timeline_file= open(timeline_file_path,'rb')
 timeline_info = pickle.load(timeline_file)
 
-timeline = np.zeros(42+1)
-for i in range(42):
+timeline = np.zeros(len(timeline_info)+1)
+for i in range(len(timeline_info)):
     timeline[i] = timeline_info[i][1]
-timeline[42] = activity.shape[1]
+timeline[len(timeline_info)] = activity.shape[1]
 trial_duration = np.diff(timeline)
 
 
@@ -106,7 +106,7 @@ trial = np.array(trial)
 event = np.array(event)
 time = np.array(frame)
 
-for i in range(len(session_trial)):
+for i in range(int(len(timeline_info)/2)):
     behaviour_trial = np.ones(int(trial_duration[i*2]))
     event_trial = event[np.where(trial == i+1)[0]]
     time_trial = time[np.where(trial == i+1)[0]]
