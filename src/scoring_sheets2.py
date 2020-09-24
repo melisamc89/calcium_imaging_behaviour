@@ -1,10 +1,10 @@
 '''
 
-Created on Fri 07 Feb 2020
+Created on n Fri 07 Feb 2020
 
 Author: Melisa
-
-Lets try to create a behavioural timeline (with the scoring) syncronized with the calcium videos.
+Lets try to create a behavioural timeline (with the scoring) syncronized with the calcium videos for day wise analysis
+for the group of mice 32363-6
 
 '''
 
@@ -18,9 +18,9 @@ import datetime
 
 current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
 mice_directory = '32363-32366/'
-mouse = 32365
-session = 2
-min_event_duration = 50
+mouse = 32363
+session = 1
+min_event_duration = 10
 
 ## initial file that conteins mouse, session, trial, resting, and timestramp information. This table conteins all mice info
 list_file_name = current_directory + 'mouse_filelist.xlsx'
@@ -85,8 +85,8 @@ for i in range(len(table_log)):
 
 
 ## load source extracted calcium traces
-file_directory = os.environ['PROJECT_DIR'] + 'data/calcium_activity/'
-file_name = 'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.4.100.1.0.1.1.1.npy'
+file_directory = os.environ['PROJECT_DIR'] + 'data/calcium_activity_normed/'
+file_name = 'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.4.100.1.0.1.1.2.npy'
 timeline_file_dir = os.environ['PROJECT_DIR'] + 'data/timeline/'
 timeline_file_path = timeline_file_dir +  'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_1_v1.4.1.0.pkl'
 

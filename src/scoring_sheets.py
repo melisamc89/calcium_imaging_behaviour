@@ -5,7 +5,7 @@ Lets try to create a behavioural timeline (with the scoring) syncronized with th
 '''
 
 import os
-#import src.configuration
+import src.configuration
 import pandas as pd
 import numpy as np
 import pickle
@@ -13,7 +13,7 @@ import datetime
 
 mouse = 56166
 session = 1
-min_event_duration = 50
+min_event_duration = 10
 
 current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
 mice_directory = '56165-56166/'

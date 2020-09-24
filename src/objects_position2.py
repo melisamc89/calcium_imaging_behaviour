@@ -14,7 +14,7 @@ import datetime
 
 current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
 mice_directory = '32363-32366/'
-mouse = 32365
+mouse = 32366
 session = 3
 min_event_duration = 20
 

@@ -15,8 +15,8 @@ import datetime
 current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
 mice_directory = '56165-56166/'
 mouse = 56165
-session = 3
-min_event_duration = 20
+session = 1
+min_event_duration = 10
 
 ## initial file that conteins mouse, session, trial, resting, and timestramp information. This table conteins all mice info
 list_file_name = current_directory + mice_directory+ 'Mouse_c57bl6_calcium_1.xlsx'
