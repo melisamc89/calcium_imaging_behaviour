@@ -6,6 +6,8 @@ Author: Melisa
 This script contains the steps into opening and construction the analysis for the
 fly camera from the object space task.
 
+This will plot a few examples of the tracking for some body parts, using a particular thrshold
+for the likelihood of the tracking
 
 '''
 
@@ -18,8 +20,11 @@ import matplotlib.cm as cm
 cmap = cm.jet
 
 
-input_file_path = os.environ['DATA_DIR_LOCAL'] + 'object_space/32363/session_1/' + \
-                  'Trial1_10072017_2017-07-10-132111-0000DLC_resnet50_object_spacesep21shuffle1_50000.csv'
+
+output_figure_path = os.environ['PROJECT_DIR_LOCAL'] + 'figures/'
+input_path = os.environ['DATA_DIR_LOCAL'] + 'object_space/32363/session_1/'
+
+input_file_path = input_path + 'Trial1_10072017_2017-07-10-132111-0000DLC_resnet50_object_spacesep21shuffle1_50000.csv'
 
 tracking_data = pd.read_csv(input_file_path)
 body_parts = ['nose', 'ear1', 'ear2' , 'head', 'middle_body','tail_start','tail_middle','tail_end']
@@ -27,7 +32,8 @@ body_part_structure = ['x', 'y', 'likelihood']
 
 
 tracking_data_array = tracking_data.to_numpy()
-LIKELIHOOD = 0.8
+
+LIKELIHOOD = 0.75
 
 x_nose = np.round(tracking_data_array[2:,1].astype(np.float),2)
 y_nose = np.round(tracking_data_array[2:,2].astype(np.float),2)
@@ -71,5 +77,18 @@ new_y_head = y_head[selection]
 figure, axes = plt.subplots(1)
 #color = np.linspace(0, 20, new_x.shape[0])
 #axes.scatter(new_x,new_y, c = color, cmap = cmap)
-axes.scatter(new_x,new_y, c = color, cmap = cmap)
+axes.plot(new_x_nose,new_y_nose)
+axes.plot(new_x_ear1,new_y_ear1)
+axes.plot(new_x_ear2,new_y_ear2)
+axes.plot(new_x_head,new_y_head)
+
+axes.legend(['Nose', 'Ear1', 'Ear2', 'Head'])
+axes.set_xlabel('X [pixels]')
+axes.set_ylabel('Y [pixels]')
+axes.set_xlim([0,800])
+axes.set_ylim([0,800])
+figure.suptitle('Tracking. Likelihood:' + f'{LIKELIHOOD}')
+
 figure.show()
+output_figure_file_path = output_figure_path + 'Trial1_10072017_2017-07-10-132111_likelihood_' + f'{LIKELIHOOD}' + '.png'
+figure.savefig(output_figure_file_path)
