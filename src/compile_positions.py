@@ -6,7 +6,7 @@ Author: Melisa
 This script contains the steps into opening and construction the analysis for the
 fly camera from the object space task.
 
-This will plot a few examples of the tracking for some body parts, using a particular thrshold
+This will plot a few examples of the tracking for some body parts, using a particular threshold
 for the likelihood of the tracking
 
 '''
@@ -16,8 +16,8 @@ import src.configuration
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.cm as cm
-cmap = cm.jet
+from scipy import stats
+
 
 ## select mouse and session to analyze
 mouse = 32363
@@ -46,7 +46,8 @@ body_part_structure = ['x', 'y', 'likelihood']
 
 ## define likelihood for data selection
 LIKELIHOOD = 0.75
-
+sf =20
+re_sf = 2
 
 for trial in range(len(session_selection)):
     ##define path and load data from tracking of one trial
@@ -87,23 +88,38 @@ for trial in range(len(session_selection)):
     intersec3 = np.intersect1d(intersec1, selection_body)
     selection= np.intersect1d(intersec2,intersec3)
 
-    new_x_nose = x_nose[selection]
-    new_y_nose = y_nose[selection]
+    new_x_nose = np.zeros_like(x_nose)
+    new_y_nose = np.zeros_like(y_nose)
+    new_x_nose[selection] = x_nose[selection]
+    new_y_nose[selection] = y_nose[selection]
 
-    new_x_ear1 = x_ear1[selection]
-    new_y_ear1 = y_ear1[selection]
+    new_x_ear1 = np.zeros_like(x_ear1)
+    new_y_ear1 = np.zeros_like(y_ear1)
+    new_x_ear1[selection] = x_ear1[selection]
+    new_y_ear1[selection] = y_ear1[selection]
 
-    new_x_ear2 = x_ear2[selection]
-    new_y_ear2 = y_ear2[selection]
+    new_x_ear2 = np.zeros_like(x_ear2)
+    new_y_ear2 = np.zeros_like(y_ear2)
+    new_x_ear2[selection] = x_ear2[selection]
+    new_y_ear2[selection] = y_ear2[selection]
 
-    new_x_head = x_head[selection]
-    new_y_head = y_head[selection]
+    new_x_head = np.zeros_like(x_head)
+    new_y_head = np.zeros_like(y_head)
+    new_x_head[selection] = x_head[selection]
+    new_y_head[selection] = y_head[selection]
 
-    new_x_body = x_body[selection]
-    new_y_body = y_body[selection]
+    new_x_body = np.zeros_like(x_body)
+    new_y_body = np.zeros_like(y_body)
+    new_x_body[selection] = x_body[selection]
+    new_y_body[selection] = y_body[selection]
 
-    new_tracking = [selection, new_x_nose, new_y_nose, new_x_ear1, new_y_ear1, new_x_ear2, new_y_ear2, new_x_head, new_y_head, new_x_body, new_y_body]
-    new_tracking = np.array(new_tracking).T
-    np.save(output_file_path,new_tracking)
+    new_tracking = np.array([new_x_nose, new_y_nose, new_x_ear1, new_y_ear1, new_x_ear2, new_y_ear2, new_x_head, new_y_head, new_x_body, new_y_body])
+    #new_tracking = np.array(new_tracking).T
+
+    reshape_tracking = np.reshape(new_tracking[:, :int(int(new_tracking.shape[1] / re_sf) * re_sf)],
+                                         (new_tracking.shape[0], int(new_tracking.shape[1] / re_sf), re_sf))
+    resample_tracking_mean = np.mean(reshape_tracking, axis=2)
+
+    np.save(output_file_path,resample_tracking_mean.T)
 
 
