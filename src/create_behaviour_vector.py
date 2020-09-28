@@ -100,10 +100,10 @@ for trial_day in [1,6,11,16,21]:
         if object1 == 'LR':
             coordinates1 = np.array([225,200])
             exploratory_flag1 = 3
-        if object1 == 'UL':
+        if object1 == 'UR':
             coordinates1 = np.array([225,600])
             exploratory_flag1 = 4
-        if object1 == 'UR':
+        if object1 == 'UL':
             coordinates1 = np.array([650,600])
             exploratory_flag1 = 5
 
@@ -113,10 +113,10 @@ for trial_day in [1,6,11,16,21]:
         if object2 == 'LR':
             coordinates2 = np.array([225,200])
             exploratory_flag2 = 3
-        if object2 == 'UL':
+        if object2 == 'UR':
             coordinates2 = np.array([225,600])
             exploratory_flag2 = 4
-        if object2 == 'UR':
+        if object2 == 'UL':
             coordinates2 = np.array([650,600])
             exploratory_flag2 = 5
 
@@ -135,16 +135,17 @@ for trial_day in [1,6,11,16,21]:
         for i in range(vector_position.shape[0]):
             distance1 = npalg.norm(vector_position[i] - coordinates1)
             distance2 = npalg.norm(vector_position[i] - coordinates2)
-            if distance1 < EXPLORING_RADIOUS:
-                behaviour_vector[init_trial:init_trial + i] = exploratory_flag1
+            if distance1 > EXPLORING_RADIOUS and distance2 > EXPLORING_RADIOUS:
+                behaviour_vector[init_trial+i] = 1
             else:
-                if distance2 < EXPLORING_RADIOUS:
-                    behaviour_vector[init_trial:init_trial + i] = exploratory_flag2
+                if distance1 < EXPLORING_RADIOUS:
+                    behaviour_vector[init_trial + i] = exploratory_flag1
                 else:
-                    behaviour_vector[init_trial:init_trial + i] = 1
+                    if distance2 < EXPLORING_RADIOUS:
+                        behaviour_vector[init_trial + i] = exploratory_flag2
 
     output_tracking_file = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_day_' + \
-                        f'{day+1}' + '_likelihood_0.75.npy'
+                        f'{trial_day}' + '_likelihood_0.75.npy'
     output_tracking_path = category_path + output_tracking_file
     np.save(output_tracking_path,behaviour_vector)
 
