@@ -17,11 +17,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
+import math
 
 
 ## select mouse and session to analyze
-mouse = 32363
-session = 1
+mouse = 32365
+session = 3
 
 ## name data excel file where list of file names is located
 file_names_file = os.environ['PROJECT_DIR_LOCAL'] + 'calcium_imaging_paths_behaviour.xlsx'
@@ -51,75 +52,76 @@ re_sf = 2
 
 for trial in range(len(session_selection)):
     ##define path and load data from tracking of one trial
-    input_file_path = input_path + session_selection.iloc[trial]['raw_file'][:-4]+dlc_extension
-    output_file_path = output_path + 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_trial_' + f'{trial+1}' +'_likelihood_'+ f'{LIKELIHOOD}'+ '.npy'
-    tracking_data = pd.read_csv(input_file_path)
-    tracking_data_array = tracking_data.to_numpy()
+    if type(session_selection.iloc[trial]['raw_file'])==str:
+        input_file_path = input_path + session_selection.iloc[trial]['raw_file'][:-4]+dlc_extension
+        output_file_path = output_path + 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_trial_' + f'{trial+1}' +'_likelihood_'+ f'{LIKELIHOOD}'+ '.npy'
+        tracking_data = pd.read_csv(input_file_path)
+        tracking_data_array = tracking_data.to_numpy()
 
-    ## select: nose, ear1, ear2, head and middle body positions for the tracking
-    x_nose = np.round(tracking_data_array[2:,1].astype(np.float),2)
-    y_nose = np.round(tracking_data_array[2:,2].astype(np.float),2)
-    likelihood_nose = np.round(tracking_data_array[2:,3].astype(np.float),2)
+        ## select: nose, ear1, ear2, head and middle body positions for the tracking
+        x_nose = np.round(tracking_data_array[2:,1].astype(np.float),2)
+        y_nose = np.round(tracking_data_array[2:,2].astype(np.float),2)
+        likelihood_nose = np.round(tracking_data_array[2:,3].astype(np.float),2)
 
-    x_ear1 = np.round(tracking_data_array[2:,4].astype(np.float),2)
-    y_ear1 = np.round(tracking_data_array[2:,5].astype(np.float),2)
-    likelihood_ear1 = np.round(tracking_data_array[2:,6].astype(np.float),2)
+        x_ear1 = np.round(tracking_data_array[2:,4].astype(np.float),2)
+        y_ear1 = np.round(tracking_data_array[2:,5].astype(np.float),2)
+        likelihood_ear1 = np.round(tracking_data_array[2:,6].astype(np.float),2)
 
-    x_ear2 = np.round(tracking_data_array[2:,7].astype(np.float),2)
-    y_ear2 = np.round(tracking_data_array[2:,8].astype(np.float),2)
-    likelihood_ear2 = np.round(tracking_data_array[2:,9].astype(np.float),2)
+        x_ear2 = np.round(tracking_data_array[2:,7].astype(np.float),2)
+        y_ear2 = np.round(tracking_data_array[2:,8].astype(np.float),2)
+        likelihood_ear2 = np.round(tracking_data_array[2:,9].astype(np.float),2)
 
-    x_head = np.round(tracking_data_array[2:,10].astype(np.float),2)
-    y_head = np.round(tracking_data_array[2:,11].astype(np.float),2)
-    likelihood_head = np.round(tracking_data_array[2:,12].astype(np.float),2)
+        x_head = np.round(tracking_data_array[2:,10].astype(np.float),2)
+        y_head = np.round(tracking_data_array[2:,11].astype(np.float),2)
+        likelihood_head = np.round(tracking_data_array[2:,12].astype(np.float),2)
 
-    x_body = np.round(tracking_data_array[2:, 13].astype(np.float), 2)
-    y_body = np.round(tracking_data_array[2:, 14].astype(np.float), 2)
-    likelihood_body = np.round(tracking_data_array[2:, 15].astype(np.float), 2)
+        x_body = np.round(tracking_data_array[2:, 13].astype(np.float), 2)
+        y_body = np.round(tracking_data_array[2:, 14].astype(np.float), 2)
+        likelihood_body = np.round(tracking_data_array[2:, 15].astype(np.float), 2)
 
-    selection_nose = np.where(likelihood_nose>LIKELIHOOD)
-    selection_ear1 = np.where(likelihood_ear1>LIKELIHOOD)
-    selection_ear2 = np.where(likelihood_ear2>LIKELIHOOD)
-    selection_head = np.where(likelihood_head>LIKELIHOOD)
-    selection_body = np.where(likelihood_body>LIKELIHOOD)
+        selection_nose = np.where(likelihood_nose>LIKELIHOOD)
+        selection_ear1 = np.where(likelihood_ear1>LIKELIHOOD)
+        selection_ear2 = np.where(likelihood_ear2>LIKELIHOOD)
+        selection_head = np.where(likelihood_head>LIKELIHOOD)
+        selection_body = np.where(likelihood_body>LIKELIHOOD)
 
-    intersec1 = np.intersect1d(selection_nose,selection_ear1)
-    intersec2 = np.intersect1d(selection_ear2,selection_head)
-    intersec3 = np.intersect1d(intersec1, selection_body)
-    selection= np.intersect1d(intersec2,intersec3)
+        intersec1 = np.intersect1d(selection_nose,selection_ear1)
+        intersec2 = np.intersect1d(selection_ear2,selection_head)
+        intersec3 = np.intersect1d(intersec1, selection_body)
+        selection= np.intersect1d(intersec2,intersec3)
 
-    new_x_nose = np.zeros_like(x_nose)
-    new_y_nose = np.zeros_like(y_nose)
-    new_x_nose[selection] = x_nose[selection]
-    new_y_nose[selection] = y_nose[selection]
+        new_x_nose = np.zeros_like(x_nose)
+        new_y_nose = np.zeros_like(y_nose)
+        new_x_nose[selection] = x_nose[selection]
+        new_y_nose[selection] = y_nose[selection]
 
-    new_x_ear1 = np.zeros_like(x_ear1)
-    new_y_ear1 = np.zeros_like(y_ear1)
-    new_x_ear1[selection] = x_ear1[selection]
-    new_y_ear1[selection] = y_ear1[selection]
+        new_x_ear1 = np.zeros_like(x_ear1)
+        new_y_ear1 = np.zeros_like(y_ear1)
+        new_x_ear1[selection] = x_ear1[selection]
+        new_y_ear1[selection] = y_ear1[selection]
 
-    new_x_ear2 = np.zeros_like(x_ear2)
-    new_y_ear2 = np.zeros_like(y_ear2)
-    new_x_ear2[selection] = x_ear2[selection]
-    new_y_ear2[selection] = y_ear2[selection]
+        new_x_ear2 = np.zeros_like(x_ear2)
+        new_y_ear2 = np.zeros_like(y_ear2)
+        new_x_ear2[selection] = x_ear2[selection]
+        new_y_ear2[selection] = y_ear2[selection]
 
-    new_x_head = np.zeros_like(x_head)
-    new_y_head = np.zeros_like(y_head)
-    new_x_head[selection] = x_head[selection]
-    new_y_head[selection] = y_head[selection]
+        new_x_head = np.zeros_like(x_head)
+        new_y_head = np.zeros_like(y_head)
+        new_x_head[selection] = x_head[selection]
+        new_y_head[selection] = y_head[selection]
 
-    new_x_body = np.zeros_like(x_body)
-    new_y_body = np.zeros_like(y_body)
-    new_x_body[selection] = x_body[selection]
-    new_y_body[selection] = y_body[selection]
+        new_x_body = np.zeros_like(x_body)
+        new_y_body = np.zeros_like(y_body)
+        new_x_body[selection] = x_body[selection]
+        new_y_body[selection] = y_body[selection]
 
-    new_tracking = np.array([new_x_nose, new_y_nose, new_x_ear1, new_y_ear1, new_x_ear2, new_y_ear2, new_x_head, new_y_head, new_x_body, new_y_body])
-    #new_tracking = np.array(new_tracking).T
+        new_tracking = np.array([new_x_nose, new_y_nose, new_x_ear1, new_y_ear1, new_x_ear2, new_y_ear2, new_x_head, new_y_head, new_x_body, new_y_body])
+        #new_tracking = np.array(new_tracking).T
 
-    reshape_tracking = np.reshape(new_tracking[:, :int(int(new_tracking.shape[1] / re_sf) * re_sf)],
-                                         (new_tracking.shape[0], int(new_tracking.shape[1] / re_sf), re_sf))
-    resample_tracking_mean = np.mean(reshape_tracking, axis=2)
+        reshape_tracking = np.reshape(new_tracking[:, :int(int(new_tracking.shape[1] / re_sf) * re_sf)],
+                                             (new_tracking.shape[0], int(new_tracking.shape[1] / re_sf), re_sf))
+        resample_tracking_mean = np.mean(reshape_tracking, axis=2)
 
-    np.save(output_file_path,resample_tracking_mean.T)
+        np.save(output_file_path,resample_tracking_mean.T)
 
 

@@ -23,8 +23,8 @@ import numpy.linalg as npalg
 import datetime
 
 ## select mouse and session to analyze
-mouse = 32363
-session = 1
+mouse = 32365
+session = 3
 min_event_duration = 10
 
 ## object positions directory
@@ -123,26 +123,29 @@ for trial_day in [1,6,11,16,21]:
         beh_file_name = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_trial_' + \
                         f'{session_trial[day][trial]}' + '_likelihood_0.75.npy'
         beh_path = behaviour_path + beh_file_name
-        tracking = np.load(beh_path)
-        init_trial = int(timeline[trial*2])
-        end_trial = int(timeline[trial*2+1])
-        duration = np.min((tracking.shape[0],end_trial-init_trial))
-        ## get tracking
-        x_positions = np.mean(tracking[0:duration,[0,2,4,6,8]],axis = 1)
-        y_positions = np.mean(tracking[0:duration,[1,3,5,7,9]],axis = 1)
-        vector_position = np.array([x_positions, y_positions]).T
+        if not os.path.isfile(beh_path):
+            print('ERROR: File not found')
+        else:
+            tracking = np.load(beh_path)
+            init_trial = int(timeline[trial*2])
+            end_trial = int(timeline[trial*2+1])
+            duration = np.min((tracking.shape[0],end_trial-init_trial))
+            ## get tracking
+            x_positions = np.mean(tracking[0:duration,[0,2,4,6,8]],axis = 1)
+            y_positions = np.mean(tracking[0:duration,[1,3,5,7,9]],axis = 1)
+            vector_position = np.array([x_positions, y_positions]).T
 
-        for i in range(vector_position.shape[0]):
-            distance1 = npalg.norm(vector_position[i] - coordinates1)
-            distance2 = npalg.norm(vector_position[i] - coordinates2)
-            if distance1 > EXPLORING_RADIOUS and distance2 > EXPLORING_RADIOUS:
-                behaviour_vector[init_trial+i] = 1
-            else:
-                if distance1 < EXPLORING_RADIOUS:
-                    behaviour_vector[init_trial + i] = exploratory_flag1
+            for i in range(vector_position.shape[0]):
+                distance1 = npalg.norm(vector_position[i] - coordinates1)
+                distance2 = npalg.norm(vector_position[i] - coordinates2)
+                if distance1 > EXPLORING_RADIOUS and distance2 > EXPLORING_RADIOUS:
+                    behaviour_vector[init_trial+i] = 1
                 else:
-                    if distance2 < EXPLORING_RADIOUS:
-                        behaviour_vector[init_trial + i] = exploratory_flag2
+                    if distance1 < EXPLORING_RADIOUS:
+                        behaviour_vector[init_trial + i] = exploratory_flag1
+                    else:
+                        if distance2 < EXPLORING_RADIOUS:
+                            behaviour_vector[init_trial + i] = exploratory_flag2
 
     output_tracking_file = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_day_' + \
                         f'{trial_day}' + '_likelihood_0.75.npy'

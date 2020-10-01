@@ -6,7 +6,7 @@ Author: Melisa
 This script contains the steps into opening and construction the analysis for the
 fly camera from the object space task.
 
-This will plot a few examples of the tracking for some body parts, using a particular thrshold
+This will plot a few examples of the tracking for some body parts, using a particular threshold
 for the likelihood of the tracking
 
 '''
