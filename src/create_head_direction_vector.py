@@ -17,8 +17,8 @@ import numpy.linalg as npalg
 import datetime
 
 ## select mouse and session to analyze
-mouse = 32363
-session = 2
+mouse = 32365
+session = 3
 min_event_duration = 10
 
 ## source extracted calcium traces directory
