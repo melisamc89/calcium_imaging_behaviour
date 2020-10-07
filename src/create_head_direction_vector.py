@@ -75,8 +75,8 @@ for trial_day in [1,6,11,16,21]:
             end_trial = int(timeline[trial*2+1])
             duration = np.min((tracking.shape[0],end_trial-init_trial))
             ## get head direction coordinates
-            x_difference = tracking[0:duration,0] - tracking[0:duration,6]
-            y_difference = tracking[0:duration,1] - tracking[0:duration,7]
+            x_difference = tracking[0:duration,6] - tracking[0:duration,0]
+            y_difference = tracking[0:duration,7] - tracking[0:duration,1]
             head_direction = np.array([x_difference , y_difference])
             head_direction = head_direction / npalg.norm(head_direction)
             head_direction_vector[init_trial:init_trial+duration,0] =head_direction[0]

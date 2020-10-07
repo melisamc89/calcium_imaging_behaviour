@@ -28,15 +28,15 @@ import src.behavioural_analysis_functions as beh_func
 ## select mouse and session to analyze
 mouse = 32363
 session = 1
-trial = 3
+trial = 4
 
 ### define relevant paths
 ## behaviour directory with information from DLC
 behaviour_path = os.environ['DATA_DIR_LOCAL'] + 'compiled_positions/'+f'{mouse}'+'/session_'+ f'{session}'+'/'
 ## input video path to fancy camera video
-input_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'videos/Trial3_10072017_2017-07-10-135007-0000.avi'
+input_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'videos/Trial4_10072017_2017-07-10-140428-0000.avi'
 ## output directoy
-output_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'compare_videos/Trial3_10072017_2017-07-10-135007-0000_dlc_new.avi'
+output_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'compare_videos/Trial4_10072017_2017-07-10-140428-0000_dlc_new.avi'
 
 ## load behaviour from DLC (tracking information from csv file)
 beh_file_name = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_trial_' + \
@@ -52,8 +52,8 @@ position = np.array([x_positions, y_positions]).T
 ## objects positions for this particular video
 object1_x = 225
 object1_y = 200
-object2_x = 650
-object2_y = 200
+object2_x = 225
+object2_y = 600
 center_coordinates1 = np.array([object1_x,object1_y])
 center_coordinates2 = np.array([object2_x,object2_y])
 
@@ -76,16 +76,19 @@ super_proximity_vector1 = beh_func.proximity_vector(position,p3,radius=75)
 super_proximity_vector2 = beh_func.proximity_vector(position,p4,radius=75)
 
 ## select events of a certain duration
-looking_vector1_last = beh_func.long_duration_events(looking_vector1,5)
-looking_vector2_last = beh_func.long_duration_events(looking_vector2,5)
+looking_vector1_last = beh_func.long_duration_events(looking_vector1,10)
+looking_vector2_last = beh_func.long_duration_events(looking_vector2,10)
 
 proximity_vector1_last = beh_func.long_duration_events(proximity_vector1,10)
 proximity_vector2_last = beh_func.long_duration_events(proximity_vector2,10)
 
-super_proximity_vector1_last = beh_func.long_duration_events(super_proximity_vector1,10)
-super_proximity_vector2_last = beh_func.long_duration_events(super_proximity_vector2,10)
+super_proximity_vector1_last = beh_func.long_duration_events(super_proximity_vector1,5)
+super_proximity_vector2_last = beh_func.long_duration_events(super_proximity_vector2,5)
 
 
+####################################################################################################################
+# FROM HERE THE SCRIPT IS RELATED TO GENERATE THE VIDEO!
+####################################################################################################################
 ## load input video DLC using cv2
 
 if not os.path.isfile(input_video_path_dlc):
