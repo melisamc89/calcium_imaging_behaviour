@@ -5,16 +5,13 @@ Author: Melisa
 
 In this script we will create a video that takes into account where the mouse is looking at.
 
-Will consider as exploration if the mouse is within a 300 pixels distance to the object,
+Will consider as exploration if the mouse is within a 150/75 pixels distance to the object,
 and of it is also looking at it!
-
-whether the mouse is looking at the object is the harder thing to define.
-
-We will define that as if the two segments that refer to the object and head direction
-intersects and that intersection is in a radius of 100 pixels around the objects position.
+Whether the mouse is looking at the object is the harder thing to define. We use the direction between
+the head and the objects positions to define it. If the angle between those is smoller that
+a certain threshold then the animal is looking at the object. Uses behavioural_analysis_functions
 
 '''
-
 
 import os
 import src.configuration
@@ -24,41 +21,24 @@ import numpy as np
 import pickle
 import numpy.linalg as npalg
 import matplotlib.pyplot as plt
-import datetime
 import logging
 import math
-
-def unit_vector(vector):
-    """ Returns the unit vector of the vector.  """
-    return vector / np.linalg.norm(vector)
-
-def angle_between(v1, v2):
-    """ Returns the angle in radians between vectors 'v1' and 'v2'::
-            >>> angle_between((1, 0, 0), (0, 1, 0))
-            1.5707963267948966
-            >>> angle_between((1, 0, 0), (1, 0, 0))
-            0.0
-            >>> angle_between((1, 0, 0), (-1, 0, 0))
-            3.141592653589793
-    """
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+import src.behavioural_analysis_functions as beh_func
 
 ## select mouse and session to analyze
 mouse = 32363
 session = 1
-trial = 4
+trial = 3
 
+### define relevant paths
 ## behaviour directory with information from DLC
 behaviour_path = os.environ['DATA_DIR_LOCAL'] + 'compiled_positions/'+f'{mouse}'+'/session_'+ f'{session}'+'/'
 ## input video path to fancy camera video
-input_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'videos/Trial4_10072017_2017-07-10-140428-0000.avi'
+input_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'videos/Trial3_10072017_2017-07-10-135007-0000.avi'
 ## output directoy
-output_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'compare_videos/Trial4_10072017_2017-07-10-140428-0000_dlc_new.avi'
+output_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'compare_videos/Trial3_10072017_2017-07-10-135007-0000_dlc_new.avi'
 
-
-## load behaviour from DLC
+## load behaviour from DLC (tracking information from csv file)
 beh_file_name = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_trial_' + \
                 f'{trial}' + '_likelihood_0.75.npy'
 beh_path = behaviour_path + beh_file_name
@@ -67,57 +47,38 @@ tracking = np.load(beh_path)
 ## tracking coordinates
 x_positions = np.mean(tracking[:, [0, 2, 4, 6, 8]], axis=1).T
 y_positions = np.mean(tracking[:, [1, 3, 5, 7, 9]], axis=1).T
+position = np.array([x_positions, y_positions]).T
 
 ## objects positions for this particular video
-center_coordinates1 = np.array([225,200])
-center_coordinates2 = np.array([225,600])
+object1_x = 225
+object1_y = 200
+object2_x = 650
+object2_y = 200
+center_coordinates1 = np.array([object1_x,object1_y])
+center_coordinates2 = np.array([object2_x,object2_y])
 
-## get points coordinates
-p2 = np.array([tracking[:,0],tracking[:,1]]).T
-p1 = np.array([tracking[:,6],tracking[:,7]]).T
-
+## get points coordinates for head direction and objects location
+p2 = np.array([tracking[:,0],tracking[:,1]]).T # nose position
+p1 = np.array([tracking[:,6],tracking[:,7]]).T # head position
 p3= center_coordinates1*np.ones_like(p1)
 p4 = center_coordinates2*np.ones_like(p1)
 
-## get head direction coordinates
-x_difference_head = (tracking[:,0] - tracking[:,6]).T
-y_difference_head = (tracking[:,1] - tracking[:,7]).T
-head_direction = np.array([x_difference_head , y_difference_head]).T
-head_direction = head_direction / npalg.norm(head_direction)
+## binary looking at object vectors
+looking_vector1, angle1_vector = beh_func.looking_at_vector(p2,p1,p3)
+looking_vector2, angle2_vector = beh_func.looking_at_vector(p2,p1,p4)
 
-## get object one direction
-x_difference_1 = (p3[:,0] - tracking[:,6]).T
-y_difference_1 = (p3[:,1] - tracking[:,7]).T
-direction1 = np.array([x_difference_1 , y_difference_1]).T
-direction1 = direction1 / npalg.norm(direction1)
+## proximity vector between mouse position and objects
+proximity_vector1 = beh_func.proximity_vector(p1,p3,radius=150)
+proximity_vector2 = beh_func.proximity_vector(p1,p4,radius=150)
 
-## get object two direction
-x_difference_2 = (p4[:,0] - tracking[:,6]).T
-y_difference_2 = (p4[:,1] - tracking[:,7]).T
-direction2 = np.array([x_difference_2 , y_difference_2]).T
-direction2 = direction2 / npalg.norm(direction2)
-
-## get angle bewtween head direction and object positions
-## and assign looking_at_vector
-looking_vector1 = np.zeros((p1.shape[0],1))
-looking_vector2 = np.zeros((p1.shape[0],1))
-
-angle1_vector = np.zeros((p1.shape[0],1))
-angle2_vector = np.zeros((p1.shape[0],1))
-
-for i in range(looking_vector1.shape[0]):
-    angle1 = angle_between(head_direction[i], direction1[i])
-    angle2 = angle_between(head_direction[i], direction2[i])
-    angle1_vector[i] = angle1
-    angle2_vector[i] = angle2
-    if angle1 < math.pi/4:
-        looking_vector1[i,0]=1
-    else:
-        if angle2 < math.pi/4:
-            looking_vector2[i,0] = 1
+## super proximity vector for mouse position and objects (closer that proximity1)
+super_proximity_vector1 = beh_func.proximity_vector(p1,p3,radius=75)
+super_proximity_vector2 = beh_func.proximity_vector(p1,p4,radius=75)
 
 
-## load input video DLC
+
+## load input video DLC using cv2
+
 if not os.path.isfile(input_video_path_dlc):
     print('ERROR: File not found')
 cap_dlc = cv2.VideoCapture(input_video_path_dlc)
@@ -145,60 +106,52 @@ output_video_dlc = cv2.VideoWriter(output_video_path_dlc, fourcc, 10, (width ,he
 radius = 150
 radius2= 75
 ## objects positions for this particular video
-center_coordinates1 = (225,200)
-center_coordinates2 = (225,600)
+center_coordinates1 = (object1_x,object1_y)
+center_coordinates2 = (object2_x,object2_y)
 # Blue color in BGR
 color1 = (255, 0, 0)
 color2 = (0, 0, 255)
 color3 = (0, 255, 0)
 
-# Line thickness of 2 px
+# Line thickness of 5 px
 thickness = 5
 pos_cero = np.array([0,0])
-
 time = 0
 while True:
     ret, frame = cap_dlc.read()
     if not ret:
         break
     if time % 2 == 0:
-        position_vector = np.array([x_positions[int(time/2)],y_positions[int(time/2)]])
-        distance1 = npalg.norm(position_vector - center_coordinates1)
-        distance2 = npalg.norm(position_vector - center_coordinates2)
-        if position_vector[0] != 0 and position_vector[1] != 0:
-            if distance1 < radius and not math.isnan(angle1_vector[int(time/2)]):
+        if position[int(time/2),0] != 0 and position[int(time/2),1] != 0:
+            if proximity_vector1[int(time/2)] and not math.isnan(angle1_vector[int(time/2)]):
                 cv2.circle(frame,center_coordinates1,radius,color2,thickness)
-                if looking_vector1[int(time/2)] or distance1 < radius2:
-                    pt1 = (int(x_positions[int(time/2)]), int(y_positions[int(time/2)]))
-                    pt2 = (int(x_positions[int(time/2)] + x_difference_head[int(time/2)]),
-                            int(y_positions[int(time/2)] + y_difference_head[int(time/2)]))
+                if looking_vector1[int(time/2)] or super_proximity_vector1[int(time/2)]:
+                    pt1 = (int(p1[int(time/2),0]), int(p1[int(time/2),1]))
+                    pt2 = (int(p2[int(time/2),0]),int(p2[int(time/2),1]))
                     cv2.arrowedLine(frame, pt1, pt2, (0, 255, 0), 10, 8)
                     cv2.circle(frame,center_coordinates1,radius,color3,thickness)
-                    if distance1 < radius2:
+                    if  super_proximity_vector1[int(time/2)]:
                         cv2.circle(frame, center_coordinates1, radius2, color3, thickness)
             else:
-                if distance2 < radius  and not math.isnan(angle2_vector[int(time/2)]):
+                if proximity_vector2[int(time/2)]  and not math.isnan(angle2_vector[int(time/2)]):
                     cv2.circle(frame, center_coordinates2, radius, color2, thickness)
-                    if looking_vector2[int(time / 2)] or distance2 < radius2:
-                        pt1 = (int(x_positions[int(time / 2)]), int(y_positions[int(time / 2)]))
-                        pt2 = (int(x_positions[int(time / 2)] + x_difference_head[int(time / 2)]),
-                               int(y_positions[int(time / 2)] + y_difference_head[int(time / 2)]))
+                    if looking_vector2[int(time / 2)] or super_proximity_vector1[int(time/2)]:
+                        pt1 = (int(p1[int(time / 2), 0]), int(p1[int(time / 2), 1]))
+                        pt2 = (int(p2[int(time / 2), 0]), int(p2[int(time / 2), 1]))
                         cv2.arrowedLine(frame, pt1, pt2, (0, 255, 0), 10, 8)
                         cv2.circle(frame, center_coordinates2, radius, color3, thickness)
-                        if distance2 < radius2:
+                        if super_proximity_vector2[int(time/2)]:
                             cv2.circle(frame, center_coordinates2, radius2, color3, thickness)
                 else:
                     if looking_vector1[int(time/2)] and not looking_vector2[int(time/2)]:
-                        pt1 = (int(x_positions[int(time/2)]), int(y_positions[int(time/2)]))
-                        pt2 = (int(x_positions[int(time/2)] + x_difference_head[int(time/2)]),
-                                int(y_positions[int(time/2)] + y_difference_head[int(time/2)]))
+                        pt1 = (int(p1[int(time / 2), 0]), int(p1[int(time / 2), 1]))
+                        pt2 = (int(p2[int(time / 2), 0]), int(p2[int(time / 2), 1]))
                         cv2.arrowedLine(frame, pt1, pt2, (255, 0, 0), 10, 8)
                         cv2.circle(frame,center_coordinates1,radius,color1,thickness)
                     else:
                         if looking_vector2[int(time/2)] and not looking_vector1[int(time/2)]:
-                            pt1 = (int(x_positions[int(time/2)]), int(y_positions[int(time/2)]))
-                            pt2 = (int(x_positions[int(time/2)] + x_difference_head[int(time/2)]),
-                                   int(y_positions[int(time/2)] + y_difference_head[int(time/2)]))
+                            pt1 = (int(p1[int(time / 2), 0]), int(p1[int(time / 2), 1]))
+                            pt2 = (int(p2[int(time / 2), 0]), int(p2[int(time / 2), 1]))
                             cv2.arrowedLine(frame, pt1, pt2, (255, 0, 0), 10, 8)
                             cv2.circle(frame,center_coordinates2,radius,color1,thickness)
 
