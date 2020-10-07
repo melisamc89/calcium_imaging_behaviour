@@ -68,13 +68,22 @@ looking_vector1, angle1_vector = beh_func.looking_at_vector(p2,p1,p3)
 looking_vector2, angle2_vector = beh_func.looking_at_vector(p2,p1,p4)
 
 ## proximity vector between mouse position and objects
-proximity_vector1 = beh_func.proximity_vector(p1,p3,radius=150)
-proximity_vector2 = beh_func.proximity_vector(p1,p4,radius=150)
+proximity_vector1 = beh_func.proximity_vector(position,p3,radius=150)
+proximity_vector2 = beh_func.proximity_vector(position,p4,radius=150)
 
 ## super proximity vector for mouse position and objects (closer that proximity1)
-super_proximity_vector1 = beh_func.proximity_vector(p1,p3,radius=75)
-super_proximity_vector2 = beh_func.proximity_vector(p1,p4,radius=75)
+super_proximity_vector1 = beh_func.proximity_vector(position,p3,radius=75)
+super_proximity_vector2 = beh_func.proximity_vector(position,p4,radius=75)
 
+## select events of a certain duration
+looking_vector1_last = beh_func.long_duration_events(looking_vector1,5)
+looking_vector2_last = beh_func.long_duration_events(looking_vector2,5)
+
+proximity_vector1_last = beh_func.long_duration_events(proximity_vector1,10)
+proximity_vector2_last = beh_func.long_duration_events(proximity_vector2,10)
+
+super_proximity_vector1_last = beh_func.long_duration_events(super_proximity_vector1,10)
+super_proximity_vector2_last = beh_func.long_duration_events(super_proximity_vector2,10)
 
 
 ## load input video DLC using cv2
@@ -123,17 +132,17 @@ while True:
         break
     if time % 2 == 0:
         if position[int(time/2),0] != 0 and position[int(time/2),1] != 0:
-            if proximity_vector1[int(time/2)] and not math.isnan(angle1_vector[int(time/2)]):
+            if proximity_vector1_last[int(time/2)] and not math.isnan(angle1_vector[int(time/2)]):
                 cv2.circle(frame,center_coordinates1,radius,color2,thickness)
-                if looking_vector1[int(time/2)] or super_proximity_vector1[int(time/2)]:
+                if looking_vector1_last[int(time/2)] or super_proximity_vector1_last[int(time/2)]:
                     pt1 = (int(p1[int(time/2),0]), int(p1[int(time/2),1]))
                     pt2 = (int(p2[int(time/2),0]),int(p2[int(time/2),1]))
                     cv2.arrowedLine(frame, pt1, pt2, (0, 255, 0), 10, 8)
                     cv2.circle(frame,center_coordinates1,radius,color3,thickness)
-                    if  super_proximity_vector1[int(time/2)]:
+                    if  super_proximity_vector1_last[int(time/2)]:
                         cv2.circle(frame, center_coordinates1, radius2, color3, thickness)
             else:
-                if proximity_vector2[int(time/2)]  and not math.isnan(angle2_vector[int(time/2)]):
+                if proximity_vector2_last[int(time/2)]  and not math.isnan(angle2_vector[int(time/2)]):
                     cv2.circle(frame, center_coordinates2, radius, color2, thickness)
                     if looking_vector2[int(time / 2)] or super_proximity_vector1[int(time/2)]:
                         pt1 = (int(p1[int(time / 2), 0]), int(p1[int(time / 2), 1]))
@@ -143,13 +152,13 @@ while True:
                         if super_proximity_vector2[int(time/2)]:
                             cv2.circle(frame, center_coordinates2, radius2, color3, thickness)
                 else:
-                    if looking_vector1[int(time/2)] and not looking_vector2[int(time/2)]:
+                    if looking_vector1_last[int(time/2)] and not looking_vector2_last[int(time/2)]:
                         pt1 = (int(p1[int(time / 2), 0]), int(p1[int(time / 2), 1]))
                         pt2 = (int(p2[int(time / 2), 0]), int(p2[int(time / 2), 1]))
                         cv2.arrowedLine(frame, pt1, pt2, (255, 0, 0), 10, 8)
                         cv2.circle(frame,center_coordinates1,radius,color1,thickness)
                     else:
-                        if looking_vector2[int(time/2)] and not looking_vector1[int(time/2)]:
+                        if looking_vector2_last[int(time/2)] and not looking_vector1_last[int(time/2)]:
                             pt1 = (int(p1[int(time / 2), 0]), int(p1[int(time / 2), 1]))
                             pt2 = (int(p2[int(time / 2), 0]), int(p2[int(time / 2), 1]))
                             cv2.arrowedLine(frame, pt1, pt2, (255, 0, 0), 10, 8)

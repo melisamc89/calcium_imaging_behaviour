@@ -1,8 +1,6 @@
 '''
-
 Created on Wed 07 OCt 2020
 Author: Melisa
-
 Functions that will be required to process different types of behaviours in the tracking
 '''
 
@@ -83,3 +81,31 @@ def proximity_vector(position =None, entity_coordinates = None, radius = None):
         if distance < radius:
             proximity_vector[i] = 1
     return proximity_vector
+
+def long_duration_events(vector = None, threshold = 0):
+
+    n = vector.shape[0]
+    vector_output = np.zeros_like(vector)
+    events_counter = 0
+    event_flag = 0
+    events = 0
+    for i in range(n):
+        if vector[i] == 1:
+            events_counter = events_counter + 1
+            #print(events_counter)
+            if event_flag == 0:
+                start_event = i
+                event_flag = 1
+        else:
+            if events_counter >= threshold and event_flag == 1:
+                vector_output[start_event: i] = 1
+                event_flag = 0
+                events_counter = 0
+                events = events + 1
+                #print('Number_events ' + f'{events}')
+            else:
+                event_flag = 0
+                events_counter = 0
+                #start_event = i
+
+    return vector_output
