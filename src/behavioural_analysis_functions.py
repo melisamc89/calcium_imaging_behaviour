@@ -26,7 +26,7 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
-def looking_at_vector(nose_position = None, head_position = None, entity_coordinates = None):
+def looking_at_vector(nose_position = None, head_position = None, entity_coordinates = None, angle_limit = math.pi/4 ):
 
     '''
     Creates a binary vector that states whether the animal is looking towards something.
@@ -58,7 +58,7 @@ def looking_at_vector(nose_position = None, head_position = None, entity_coordin
     for i in range(looking_vector.shape[0]):
         angle1 = angle_between(head_direction[i], direction[i])
         angle_vector[i] = angle1
-        if angle1 < math.pi / 4:
+        if angle1 < angle_limit:
             looking_vector[i, 0] = 1
 
     return looking_vector,angle_vector

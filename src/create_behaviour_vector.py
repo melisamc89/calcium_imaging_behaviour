@@ -23,8 +23,8 @@ import numpy.linalg as npalg
 import datetime
 
 ## select mouse and session to analyze
-mouse = 32365
-session = 3
+mouse = 32363
+session = 1
 min_event_duration = 10
 
 ## object positions directory
@@ -132,8 +132,8 @@ for trial_day in [1,6,11,16,21]:
             end_trial = int(timeline[trial*2+1])
             duration = np.min((tracking.shape[0],end_trial-init_trial))
             ## get tracking
-            x_positions = np.mean(tracking[0:duration,[0,2,4,6,8]],axis = 1)
-            y_positions = np.mean(tracking[0:duration,[1,3,5,7,9]],axis = 1)
+            x_positions = np.mean(tracking[0:2:duration,[0,2,4,6,8]],axis = 1)
+            y_positions = np.mean(tracking[0:2:duration,[1,3,5,7,9]],axis = 1)
             vector_position = np.array([x_positions, y_positions]).T
 
             for i in range(vector_position.shape[0]):
