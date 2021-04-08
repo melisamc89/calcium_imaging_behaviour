@@ -8,6 +8,7 @@ import os
 import numpy as np
 import numpy.linalg as npalg
 import math
+from collections import Counter
 
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
@@ -26,7 +27,7 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
-def looking_at_vector(nose_position = None, head_position = None, entity_coordinates = None, angle_limit = math.pi/4 ):
+def looking_at_vector(nose_position = None, head_position = None, entity_coordinates = None, angle_limit = math.pi/3):
 
     '''
     Creates a binary vector that states whether the animal is looking towards something.
@@ -109,3 +110,34 @@ def long_duration_events(vector = None, threshold = 0):
                 #start_event = i
 
     return vector_output
+
+def my_mode(sample = None):
+    c = Counter(sample)
+    return [k for k, v in c.items() if v == c.most_common(1)[0][1]]
+
+def filter_positions_mode(signal = None, window = 10):
+    filter_signal = np.zeros_like(signal)
+    for i in range(window,filter_signal.shape[0]-window):
+        filter_signal[i] = my_mode(signal[i-window:i+window])[0]
+    return filter_signal
+
+def interpolate_positions(signal1 = None, signal2 = None):
+
+    inter_signal1 = np.copy(signal1)
+    inter_signal2 = np.copy(signal2)
+
+    init1 = min(np.where(signal1)[0])
+    init2 = min(np.where(signal2)[0])
+    init = max(init1,init2)
+
+    for i in range(init,signal1.shape[0]):
+        if signal1[i] == 0 and signal2[i] == 0:
+            non_zeros_pre = np.where(signal1[:i])[0]
+            non_zeros_after = np.where(signal1[i:])[0]
+            if non_zeros_pre.shape[0] and non_zeros_after.shape[0]:
+                index1 = max(non_zeros_pre)
+                index2 = min(non_zeros_after)
+                inter_signal1[i] = (signal1[index1]+signal1[index2])/2
+                inter_signal2[i] = (signal2[index1]+signal2[index2])/2
+
+    return inter_signal1, inter_signal2

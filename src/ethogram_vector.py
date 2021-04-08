@@ -36,16 +36,17 @@ import numpy as np
 import pickle
 import math
 import behavioural_analysis_functions as beh_func
+from scipy.ndimage import gaussian_filter
 
 ## select mouse and session to analyze
-mouse = 32363
-session = 2
-MIN_EXPLORATION = 2 # frames taking into account videos are already in 10fps
-MIN_LOOKING = 4    # frames taking into account videos are already in 10fps
+mouse = 56165
+session = 1
+MIN_EXPLORATION = 1 # frames taking into account videos are already in 10fps
+MIN_LOOKING = 1    # frames taking into account videos are already in 10fps
 
-RADIUS1 = 100 # in pixels, big circle
-RADIUS2 = 50  # in pixels, inner circle
-SPEED_LIM = 5   # speed in pixels
+RADIUS1 = 150 # in pixels, big circle
+RADIUS2 = 100  # in pixels, inner circle
+SPEED_LIM = 3   # speed in pixels
 
 ## object positions directory
 current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
@@ -82,10 +83,10 @@ session_trial.append(np.arange(16,21))
 session_trial.append(np.arange(21,22))
 
 day = 0
-for trial_day in [1,6,11,16,21]:
+for trial_day in [1,6,11,16]:
 
     ## load calcium activity
-    file_name = 'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_'+f'{trial_day}' +'_v1.4.20.3.0.1.1.0.npy'
+    file_name = 'mouse_'+f'{mouse}'+'_session_'+f'{session}'+'_trial_'+f'{trial_day}' +'_v1.4.20.3.0.1.1.1.npy'
     activity = np.load(calcium_directory + file_name)
 
     ## load timeline
@@ -117,43 +118,43 @@ for trial_day in [1,6,11,16,21]:
 
         if object1 == 'LL':
             coordinates1 = np.array([650,600])
-            exploratory_flag1 = 2
-            looking_flag1 = 2
+            exploratory_flag1 = 3
+            looking_flag1 = 7
         if object1 == 'LR':
             coordinates1 = np.array([225,600])
-            exploratory_flag1 = 3
-            looking_flag1 = 3
+            exploratory_flag1 = 4
+            looking_flag1 = 8
         if object1 == 'UR':
             coordinates1 = np.array([225,200])
-            exploratory_flag1 = 4
-            looking_flag1 = 4
+            exploratory_flag1 = 5
+            looking_flag1 = 9
         if object1 == 'UL':
             coordinates1 = np.array([650,200])
-            exploratory_flag1 = 5
-            looking_flag1 = 5
+            exploratory_flag1 = 6
+            looking_flag1 = 10
 
         if object2 == 'LL':
             coordinates2 = np.array([650,600])
-            exploratory_flag2 = 2
-            looking_flag2 = 2
+            exploratory_flag2 = 3
+            looking_flag2 = 7
         if object2 == 'LR':
             coordinates2 = np.array([225,600])
-            exploratory_flag2 = 3
-            looking_flag2 = 3
+            exploratory_flag2 = 4
+            looking_flag2 = 8
         if object2 == 'UR':
             coordinates2 = np.array([225,200])
-            exploratory_flag2 = 4
-            looking_flag2 = 4
+            exploratory_flag2 = 5
+            looking_flag2 = 9
         if object2 == 'UL':
             coordinates2 = np.array([650,200])
-            exploratory_flag2 = 5
-            looking_flag2 = 5
+            exploratory_flag2 = 6
+            looking_flag2 = 10
 
         beh_file_name = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_trial_' + \
                         f'{session_trial[day][trial]}' + '_likelihood_0.75.npy'
         beh_path = behaviour_path + beh_file_name
         if not os.path.isfile(beh_path):
-            print('ERROR: File not found')
+            print('ERROR: Behaviour file not found:' + beh_path)
         else:
             tracking = np.load(beh_path)
             #tracking_load = np.load(beh_path).T
@@ -166,8 +167,14 @@ for trial_day in [1,6,11,16,21]:
             end_trial = int(timeline[trial*2+1])
             duration = np.min((tracking.shape[0],end_trial-init_trial))
             ## tracking coordinates
-            x_positions = np.mean(tracking[0:duration, [0, 2, 4, 6, 8]], axis=1).T
-            y_positions = np.mean(tracking[0:duration, [1, 3, 5, 7, 9]], axis=1).T
+            x_positions_pre = np.mean(tracking[0:duration, [0, 2, 4, 6, 8]], axis=1).T
+            y_positions_pre = np.mean(tracking[0:duration, [1, 3, 5, 7, 9]], axis=1).T
+
+            x_positions_inter, y_positions_inter = beh_func.interpolate_positions(signal1 = x_positions_pre, signal2 = y_positions_pre)
+
+            x_positions = gaussian_filter(x_positions_inter, sigma=2)
+            y_positions = gaussian_filter(y_positions_inter, sigma=2)
+
             vx = np.zeros((x_positions.shape[0],1))
             vy = np.zeros((y_positions.shape[0],1))
             vx[1:,0] = np.diff(x_positions)
@@ -197,8 +204,8 @@ for trial_day in [1,6,11,16,21]:
             looking_vector1_last = beh_func.long_duration_events(looking_vector1, MIN_LOOKING)
             looking_vector2_last = beh_func.long_duration_events(looking_vector2, MIN_LOOKING)
 
-            proximity_vector1_last = beh_func.long_duration_events(proximity_vector1, MIN_EXPLORATION*2)
-            proximity_vector2_last = beh_func.long_duration_events(proximity_vector2, MIN_EXPLORATION*2)
+            proximity_vector1_last = beh_func.long_duration_events(proximity_vector1, MIN_EXPLORATION)
+            proximity_vector2_last = beh_func.long_duration_events(proximity_vector2, MIN_EXPLORATION)
 
             super_proximity_vector1_last = beh_func.long_duration_events(super_proximity_vector1, MIN_EXPLORATION)
             super_proximity_vector2_last = beh_func.long_duration_events(super_proximity_vector2, MIN_EXPLORATION)
@@ -210,21 +217,21 @@ for trial_day in [1,6,11,16,21]:
                     inspection = 0
                     if proximity_vector1_last[i] and not math.isnan(angle1_vector[i]):
                         if looking_vector1_last[i] or super_proximity_vector1_last[i]:
-                            ethogram_vector[init_trial + i] = 4
+                            ethogram_vector[init_trial + i] = exploratory_flag1
                             closeness = 1
                     if proximity_vector2_last[i] and not math.isnan(angle2_vector[i]):
                         if looking_vector2[i] or super_proximity_vector1[i]:
-                            ethogram_vector[init_trial + i] = 4
+                            ethogram_vector[init_trial + i] = exploratory_flag2
                             closeness = 1
                     if speed[i] > SPEED_LIM and closeness == 0:
                         if looking_vector1_last[i] and not looking_vector2_last[i]:
-                                ethogram_vector[init_trial + i] = 2
+                                ethogram_vector[init_trial + i] = looking_flag1
                                 inspection = 1
                         if looking_vector2_last[i] and not looking_vector1_last[i]:
-                                ethogram_vector[init_trial + i] = 2
+                                ethogram_vector[init_trial + i] = looking_flag2
                                 inspection = 1
                         if inspection == 0:
-                            ethogram_vector[init_trial + i] = 3
+                            ethogram_vector[init_trial + i] = 2
                     if speed[i] < SPEED_LIM and closeness == 0 and inspection == 0:
                             ethogram_vector[init_trial + i] = 1
 
