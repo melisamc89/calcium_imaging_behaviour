@@ -35,6 +35,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
+import pandas as pd
 import math
 import configuration
 import behavioural_analysis_functions as beh_func
@@ -44,57 +45,119 @@ from scipy.ndimage import gaussian_filter
 
 ## select mouse and session to analyze
 mouse = 32363
-session = 2
-trial = 6
+session = 1
+day = 0
+trial0 = 1
+trial = 1
 
 ## behaviour directory
 behaviour_path = os.environ['DATA_DIR_LOCAL'] + 'compiled_positions/'+f'{mouse}'+'/session_'+ f'{session}'+'/'
 ## input video path to fancy camera video
-input_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'videos/32363_2/32363_Trial1_18072017_2017-07-18-124457-0000.avi'
+#input_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'videos/32363_2/32363_Trial1_18072017_2017-07-18-124457-0000.avi'
+#input_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'videos/56165/20180507_56165_Trial1_2018-05-07-081807-0000.avi'
+input_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'videos/Trial1_10072017_2017-07-10-132111-0000.avi'
+
 ## output directoy
-output_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'ethogram_videos/32363_Trial1_18072017_2017-07-18-124457-0000.avi'
+output_video_path_dlc = os.environ['DATA_DIR_LOCAL'] + 'ethogram_videos/Trial1_10072017_2017-07-10-132111-0000.avi'
 
 ## load behaviour from DLC (tracking information from csv file)
 beh_file_name = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_trial_' + \
-                f'{trial}' + '_likelihood_0.75.npy'
+                f'{trial}' + '_likelihood_0.95.npy'
 beh_path = behaviour_path + beh_file_name
 tracking = np.load(beh_path)
 ## tracking coordinates
 ## tracking coordinates
-x_positions_pre = np.mean(tracking[:, [0, 2, 4, 6, 8]], axis=1).T
-y_positions_pre = np.mean(tracking[:, [1, 3, 5, 7, 9]], axis=1).T
+#x_positions_pre = np.mean(tracking[:, [0, 2, 4, 6, 8]], axis=1).T
+#y_positions_pre = np.mean(tracking[:, [1, 3, 5, 7, 9]], axis=1).T
 
+x_positions_pre_nose = tracking[:,0].T
+y_positions_pre_nose = tracking[:,1].T
 #x_positions = beh_func.filter_positions_mode(signal=x_positions_pre, window=2)
 #y_positions = beh_func.filter_positions_mode(signal=y_positions_pre, window=2)
-
-x_positions_inter,y_positions_inter  = beh_func.interpolate_positions(x_positions_pre, y_positions_pre)
-
+x_positions_inter_nose,y_positions_inter_nose  = beh_func.interpolate_positions(x_positions_pre_nose, y_positions_pre_nose)
 #time = np.linspace(0, x_positions1.shape[0], num=x_positions1.shape[0], endpoint=True)
 #x_interpolation = interp1d(time, x_positions1, kind = 'cubic')
 #y_interpolation = interp1d(time, y_positions1, kind = 'cubic')
+x_positions_nose = x_positions_inter_nose#gaussian_filter(x_positions_inter_nose, sigma=2)
+y_positions_nose = y_positions_inter_nose#gaussian_filter(y_positions_inter_nose, sigma=2)
 
-x_positions = gaussian_filter(x_positions_inter, sigma=2)
-y_positions = gaussian_filter(y_positions_inter, sigma=2)
+x_positions_pre_head = tracking[:,2].T
+y_positions_pre_head = tracking[:,3].T
+x_positions_inter_head,y_positions_inter_head  = beh_func.interpolate_positions(x_positions_pre_head, y_positions_pre_head)
+#time = np.linspace(0, x_positions1.shape[0], num=x_positions1.shape[0], endpoint=True)
+#x_interpolation = interp1d(time, x_positions1, kind = 'cubic')
+#y_interpolation = interp1d(time, y_positions1, kind = 'cubic')
+x_positions_head = x_positions_inter_head #gaussian_filter(x_positions_inter_head, sigma=2)
+y_positions_head = y_positions_inter_head  #gaussian_filter(y_positions_inter_head, sigma=2)
 
-position = np.array([x_positions, y_positions]).T
-vx = np.zeros((x_positions.shape[0], 1))
-vy = np.zeros((y_positions.shape[0], 1))
-vx[1:,0]=np.diff(x_positions)
-vy[1:,0]=np.diff(y_positions)
-position = np.array([x_positions, y_positions]).T
+position = np.array([x_positions_head, y_positions_head]).T
+position_nose = np.array([x_positions_nose, y_positions_nose]).T
+vx = np.zeros((x_positions_head.shape[0], 1))
+vy = np.zeros((y_positions_head.shape[0], 1))
+vx[1:,0]=np.diff(position[:,0])
+vy[1:,0]=np.diff(position[:,1])
 speed = np.sqrt(vx*vx+vy*vy)
 
-## objects positions for this particular video
-object1_x = 650
-object1_y = 600
-object2_x = 650
-object2_y = 200
+## objects positions for general fideos using positional files
+## initial file that conteins mouse, session, trial, resting, and timestramp information.
+# This table conteins all mice info
+## object positions directory
+current_directory = os.environ['PROJECT_DIR'] + 'data/scoring_sheets/'
+if mouse == 32363 or mouse == 32364 or mouse == 32365 or mouse == 32366:
+    mice_directory = '32363-32366/'
+else:
+    mice_directory = '56165-56166/'
+objects_file_name = current_directory + mice_directory + 'mouse_training_OS_calcium_1.xlsx'
+objects_list_structure = ['condition', 'goal','group','session','drug','subject', 'trial','day', 'loc_1','loc_2']
+object_list = pd.read_excel(objects_file_name)
+object_list = pd.DataFrame(object_list,columns=objects_list_structure)
+current_object_data = object_list[ object_list.subject ==mouse]
+current_object_data = current_object_data[current_object_data.session == session]
+objects = ['LR', 'LL', 'UR', 'UL']
+session_trial = []
+session_trial.append(np.arange(1,6))
+session_trial.append(np.arange(6,11))
+session_trial.append(np.arange(11,16))
+session_trial.append(np.arange(16,21))
+session_trial.append(np.arange(21,22))
+object1 = current_object_data.iloc[session_trial[day][trial0-1] - 1]['loc_1']
+object2 = current_object_data.iloc[session_trial[day][trial0-1] - 1]['loc_2']
+
+## define coordinates of objects in pixels acording to the frame size
+## and define the exploratory flag
+
+if object1 == 'LL':
+    object1_x = 550
+    object1_y = 100
+if object1 == 'LR':
+    object1_x = 150
+    object1_y = 100
+if object1 == 'UR':
+    object1_x = 150
+    object1_y = 500
+if object1 == 'UL':
+    object1_x = 550
+    object1_y = 500
+
+if object2 == 'LL':
+    object2_x = 550
+    object2_y = 100
+if object2 == 'LR':
+    object2_x = 150
+    object2_y = 100
+if object2 == 'UR':
+    object2_x = 150
+    object2_y = 500
+if object2 == 'UL':
+    object2_x = 550
+    object2_y = 500
+
 center_coordinates1 = np.array([object1_x,object1_y])
 center_coordinates2 = np.array([object2_x,object2_y])
 
 ## get points coordinates for head direction and objects location
-p2 = np.array([tracking[:,0],tracking[:,1]]).T # nose position
-p1 = np.array([tracking[:,6],tracking[:,7]]).T # head position
+p2 = position_nose # nose position
+p1 = position # head position
 p3= center_coordinates1*np.ones_like(p1)
 p4 = center_coordinates2*np.ones_like(p1)
 
@@ -103,12 +166,12 @@ looking_vector1, angle1_vector = beh_func.looking_at_vector(p2,p1,p3)
 looking_vector2, angle2_vector = beh_func.looking_at_vector(p2,p1,p4)
 
 ## proximity vector between mouse position and objects
-proximity_vector1 = beh_func.proximity_vector(position,p3,radius=150)
-proximity_vector2 = beh_func.proximity_vector(position,p4,radius=150)
+proximity_vector1 = beh_func.proximity_vector(position,p3,radius = 200)
+proximity_vector2 = beh_func.proximity_vector(position,p4,radius=200)
 
 ## super proximity vector for mouse position and objects (closer that proximity1)
-super_proximity_vector1 = beh_func.proximity_vector(position,p3,radius=100)
-super_proximity_vector2 = beh_func.proximity_vector(position,p4,radius=100)
+super_proximity_vector1 = beh_func.proximity_vector(position,p3,radius=150)
+super_proximity_vector2 = beh_func.proximity_vector(position,p4,radius=150)
 
 ## select events of a certain duration
 looking_vector1_last = beh_func.long_duration_events(looking_vector1,1)
@@ -154,7 +217,7 @@ output_video_dlc = cv2.VideoWriter(output_video_path_dlc, fourcc, 10, (width ,he
 # Radius of circle
 radius = 150
 radius2= 100
-speed_lim = 3
+speed_lim = 5
 ## objects positions for this particular video
 center_coordinates1 = (object1_x,object1_y)
 center_coordinates2 = (object2_x,object2_y)
@@ -173,7 +236,7 @@ while True:
     if not ret:
         break
     if time % 2 == 0:
-        if position[int(time/2),0] != 0 and position[int(time/2),1] != 0:
+        if position[int(time/2),0] != -1000 and position[int(time/2),1] != -1000:
             pt1 = (int(p1[int(time / 2), 0]), int(p1[int(time / 2), 1]))
             pt2 = (int(p2[int(time / 2), 0]), int(p2[int(time / 2), 1]))
             closesness = 0
@@ -186,14 +249,15 @@ while True:
                     cv2.putText(frame, 'ExploringObj1', (10, 450),font, 3,color4, 2, cv2.LINE_AA)
                     if super_proximity_vector1_last[int(time/2)]:
                         cv2.circle(frame, center_coordinates1, radius2, color4, thickness)
-            if proximity_vector2_last[int(time/2)]:#  and not math.isnan(angle2_vector[int(time/2)]):
-                cv2.circle(frame, center_coordinates2, radius2, color4, thickness)
-                closesness = 1
-                cv2.arrowedLine(frame, pt1, pt2, color4, 5, 8)
-                if looking_vector2_last[int(time / 2)] or super_proximity_vector1[int(time/2)]:
-                    cv2.putText(frame, 'ExploringObj2', (10, 450),font, 3,color4, 2, cv2.LINE_AA)
-                    if super_proximity_vector2[int(time/2)]:
-                        cv2.circle(frame, center_coordinates2, radius2, color4, thickness)
+            else:
+                if proximity_vector2_last[int(time/2)]:#  and not math.isnan(angle2_vector[int(time/2)]):
+                    cv2.circle(frame, center_coordinates2, radius2, color4, thickness)
+                    closesness = 1
+                    cv2.arrowedLine(frame, pt1, pt2, color4, 5, 8)
+                    if looking_vector2_last[int(time / 2)] or super_proximity_vector1[int(time/2)]:
+                        cv2.putText(frame, 'ExploringObj2', (10, 450),font, 3,color4, 2, cv2.LINE_AA)
+                        if super_proximity_vector2[int(time/2)]:
+                            cv2.circle(frame, center_coordinates2, radius2, color4, thickness)
             if speed[int(time/2)] > speed_lim and closesness == 0:
                 if looking_vector1_last[int(time/2)] and not looking_vector2_last[int(time/2)]:
                     inspection = 1

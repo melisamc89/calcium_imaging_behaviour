@@ -27,7 +27,7 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
-def looking_at_vector(nose_position = None, head_position = None, entity_coordinates = None, angle_limit = math.pi/3):
+def looking_at_vector(nose_position = None, head_position = None, entity_coordinates = None, angle_limit = math.pi/2):
 
     '''
     Creates a binary vector that states whether the animal is looking towards something.
@@ -123,21 +123,21 @@ def filter_positions_mode(signal = None, window = 10):
 
 def interpolate_positions(signal1 = None, signal2 = None):
 
-    inter_signal1 = np.copy(signal1)
-    inter_signal2 = np.copy(signal2)
+    inter_signal1 = signal1.copy()
+    inter_signal2 = signal2.copy()
 
-    init1 = min(np.where(signal1)[0])
-    init2 = min(np.where(signal2)[0])
+    init1 = min(np.where(signal1>0)[0])
+    init2 = min(np.where(signal2>0)[0])
     init = max(init1,init2)
 
     for i in range(init,signal1.shape[0]):
-        if signal1[i] == 0 and signal2[i] == 0:
-            non_zeros_pre = np.where(signal1[:i])[0]
-            non_zeros_after = np.where(signal1[i:])[0]
+        if signal1[i] < 0 or signal2[i] < 0:
+            non_zeros_pre = np.where(signal1[:i]>0)[0]
+            non_zeros_after = np.where(signal1[i:]>0)[0]
             if non_zeros_pre.shape[0] and non_zeros_after.shape[0]:
                 index1 = max(non_zeros_pre)
-                index2 = min(non_zeros_after)
+                index2 = min(non_zeros_after)+i
                 inter_signal1[i] = (signal1[index1]+signal1[index2])/2
                 inter_signal2[i] = (signal2[index1]+signal2[index2])/2
 
-    return inter_signal1, inter_signal2
+    return inter_signal1,inter_signal2
