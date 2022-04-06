@@ -11,15 +11,8 @@ and the calcium traces to check on length of individual parts.
 
 It needs also the information of the object locations from excels file
 
-Will generate a discrete vector with information about the moments when the animal is involved in certain ethogram
-defined behaviours.
-
-1. Navigation : animal is far away from the object (circle defined as 200px radious) and running at speed > 2cm/s
-2. Resting    : animal is far away from the object circle defined as 200px radious and speed < 2cm/s
-3. Exploring  : animal is close to object (with a big radius of 200px) and is inspecting it, or it is at a closer distance (radius < 100 px)
-4. Inspection : animal is looking at the object (angle between head direction and object direcction < 45')
-
-Exploting and inspection can be divided in the different objects the animal is looking at, given by the positions of the objects.
+Will generate a discrete vector with information about the moments when the animal is involved in certain corners explorations,
+and will save also a speed vector.
 
 1. LL : lower left object
 2. LR : Lower right object
@@ -49,6 +42,7 @@ RADIUS1 = 150 # in pixels, big circle
 RADIUS2 = 100  # in pixels, inner circle
 SPEED_LIM = 5   # speed in pixels
 
+
 ## object positions directory
 current_directory = os.environ['DATA_DIR'] +'calcium_imaging_behaviour/data/' +'scoring_sheets/'
 if mouse == 32363 or mouse == 32364 or mouse == 32365 or mouse == 32366:
@@ -57,21 +51,22 @@ else:
     mice_directory = '56165-56166/'
 
 ## source extracted calcium traces directory
-calcium_directory = os.environ['PROJECT_DIR'] + 'data/calcium_activity_day_wise/'
+calcium_directory = os.environ['DATA_DIR_LOCAL'] + 'calcium_imaging_behaviour/data/calcium_activity_day_wise/'
 ## timeline directory
-timeline_file_dir = os.environ['PROJECT_DIR'] + 'data/timeline/'
+timeline_file_dir = os.environ['DATA_DIR_LOCAL'] + 'calcium_imaging_behaviour/data/timeline/'
 ## behaviour directory
-behaviour_path = os.environ['DATA_DIR_LOCAL'] + 'compiled_positions/'+f'{mouse}'+'/session_'+ f'{session}'+'/'
+behaviour_path = os.environ['DATA_DIR_LOCAL'] + 'calcium_imaging_behaviour/data/compiled_positions/' + f'{mouse}' + '/session_' + f'{session}' + '/'
 ## output directoy
-category_path = os.environ['DATA_DIR_LOCAL'] + 'ethogram_unsupervised/'+f'{mouse}'+'/session_'+ f'{session}'+'/'
+category_path = os.environ['DATA_DIR_LOCAL'] + 'calcium_imaging_behaviour/data/corner/' + f'{mouse}' + '/session_' + f'{session}' + '/'
 
 ## initial file that conteins mouse, session, trial, resting, and timestramp information.
 # This table conteins all mice info
 objects_file_name = current_directory + mice_directory + 'mouse_training_OS_calcium_1.xlsx'
-objects_list_structure = ['condition', 'goal','group','session','drug','subject', 'trial','day', 'loc_1','loc_2']
+objects_list_structure = ['condition', 'goal', 'group', 'session', 'drug', 'subject', 'trial', 'day', 'loc_1',
+                          'loc_2']
 object_list = pd.read_excel(objects_file_name)
-object_list = pd.DataFrame(object_list,columns=objects_list_structure)
-current_object_data = object_list[ object_list.subject ==mouse]
+object_list = pd.DataFrame(object_list, columns=objects_list_structure)
+current_object_data = object_list[object_list.subject == mouse]
 current_object_data = current_object_data[current_object_data.session == session]
 objects = ['LR', 'LL', 'UR', 'UL']
 
@@ -82,9 +77,6 @@ session_trial.append(np.arange(6,11))
 session_trial.append(np.arange(11,16))
 session_trial.append(np.arange(16,21))
 session_trial.append(np.arange(21,22))
-
-coordinates = [ np.array([550, 100]),np.array([150, 100]), np.array([150, 500]),np.array([550, 500])]
-navigation_flag = [1,2,3,4]
 
 day = 0
 for trial_day in [1,6,11,16]:
@@ -106,40 +98,21 @@ for trial_day in [1,6,11,16]:
     trial_duration = np.diff(timeline)
 
     ## create vector to save behaviour
-    behaviour_vector = np.zeros((activity.shape[1],1))
-    inspection_vector = np.zeros((activity.shape[1],1))
-    ethogram_vector = np.zeros((activity.shape[1],1))
-    ethogram_vector_ID = np.zeros((activity.shape[1],1))
     corners_vector = np.zeros((activity.shape[1],1))
     speed_vector = np.zeros((activity.shape[1],1))
 
     ## load tracking of behaviour
     for trial in range(len(session_trial[day])):
-        ## load objects positions for this trial
-        object1 = current_object_data.iloc[session_trial[day][trial]-1]['loc_1']
-        object2 = current_object_data.iloc[session_trial[day][trial]-1]['loc_2']
-
         ## define coordinates of objects in pixels acording to the frame size
         ## and define the exploratory flag
-
-        selected_i = -1
-        selected_j = -1
-        for i in range(4):
-            for j in range(4):
-                if object1 == objects[i]:
-                    coordinates1 = coordinates[i]
-                    exploratory_flag1 = i+3
-                    looking_flag1 = i+7
-                    selected_i = i
-                if object2 == objects[j]:
-                    coordinates2 = coordinates[j]
-                    exploratory_flag2 = j+3
-                    looking_flag2 = j+7
-                    selected_j = j
-
-        objects_list = [selected_i,selected_j]
-        corners_list = [1,2,3,4]
-        non_object_list = list(set(objects_list) ^ set(corners_list))
+        coordinates1 = np.array([550,100])
+        exploratory_flag1 = 1
+        coordinates2 = np.array([150,100])
+        exploratory_flag2 = 2
+        coordinates3 = np.array([150,500])
+        exploratory_flag3 = 3
+        coordinates4 = np.array([550,500])
+        exploratory_flag4 = 4
 
         beh_file_name = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_trial_' + \
                         f'{session_trial[day][trial]}' + '_likelihood_0.75.npy'
@@ -153,13 +126,13 @@ for trial_day in [1,6,11,16]:
             end_trial = int(timeline[trial * 2 + 1])
             duration = np.min((tracking.shape[0], end_trial - init_trial))
             ## tracking coordinates
-            cm = np.zeros((tracking.shape[0], 2))
+            cm = np.zeros((tracking.shape[0],2))
             for body_part in range(5):
-                x = tracking[:, body_part * 2]
-                y = tracking[:, body_part * 2 + 1]
-                x_new, y_new = beh_func.interpolate_positions(x, y)
-                cm[:, 0] = signal.medfilt(x_new, 7)
-                cm[:, 1] = signal.medfilt(y_new, 7)
+                x = tracking[:, body_part*2]
+                y = tracking[:, body_part * 2+1]
+                x_new, y_new = beh_func.interpolate_positions(x,y)
+                cm[:,0]= signal.medfilt(x_new, 7)
+                cm[:,1] = signal.medfilt(y_new, 7)
 
             x_positions_pre_nose = tracking[:, 0].T
             y_positions_pre_nose = tracking[:, 1].T
@@ -175,112 +148,86 @@ for trial_day in [1,6,11,16]:
             x_positions_head = x_positions_inter_head  # gaussian_filter(x_positions_inter_head, sigma=2)
             y_positions_head = y_positions_inter_head  # gaussian_filter(y_positions_inter_head, sigma=2)
 
-            position = np.array([cm[:, 0], cm[:, 1]]).T
+            position = np.array([cm[:,0], cm[:,1]]).T
             position_nose = np.array([x_positions_nose, y_positions_nose]).T
-            vx = np.zeros((cm[:, 0].shape[0], 1))
-            vy = np.zeros((cm[:, 1].shape[0], 1))
+            vx = np.zeros((cm[:,0].shape[0], 1))
+            vy = np.zeros((cm[:,1].shape[0], 1))
             vx[1:, 0] = np.diff(position[:, 0])
             vy[1:, 0] = np.diff(position[:, 1])
             speed = np.sqrt(vx * vx + vy * vy)
 
             ## get points coordinates for head direction and objects location
-            # p2 = np.array([tracking[0:duration, 0], tracking[0:duration, 1]]).T  # nose position
-            # p1 = np.array([tracking[0:duration, 2], tracking[0:duration, 3]]).T  # head position
+            #p2 = np.array([tracking[0:duration, 0], tracking[0:duration, 1]]).T  # nose position
+            #p1 = np.array([tracking[0:duration, 2], tracking[0:duration, 3]]).T  # head position
             p2 = position_nose  # nose position
-            p0 = np.array([x_positions_head, y_positions_head]).T
+            p0 = np.array([x_positions_head , y_positions_head]).T
             p1 = position  # cm position
             p3 = coordinates1 * np.ones_like(p1)
             p4 = coordinates2 * np.ones_like(p1)
-
-            # p5 = coordinates[non_object_list[0]] * np.ones_like(p1)
-            # p6 = coordinates[non_object_list[1]] * np.ones_like(p1)
+            p5 = coordinates3 * np.ones_like(p1)
+            p6 = coordinates4 * np.ones_like(p1)
 
             ## binary looking at object vectors
             looking_vector1, angle1_vector = beh_func.looking_at_vector(p2, p0, p3)
             looking_vector2, angle2_vector = beh_func.looking_at_vector(p2, p0, p4)
-            # looking_vector3, angle3_vector = beh_func.looking_at_vector(p2, p0, p5)
-            # looking_vector4, angle4_vector = beh_func.looking_at_vector(p2, p0, p6)
-
-
-            ## proximity vector between mouse position and objects
-            proximity_vector1 = beh_func.proximity_vector(position, p3, radius=RADIUS1)
-            proximity_vector2 = beh_func.proximity_vector(position, p4, radius=RADIUS1)
-            # proximity_vector3 = beh_func.proximity_vector(position, p5, radius=RADIUS1)
-            # proximity_vector4 = beh_func.proximity_vector(position, p6, radius=RADIUS1)
-
-            ## super proximity vector for mouse position and objects (closer that proximity1)
-            super_proximity_vector1 = beh_func.proximity_vector(position, p3, radius=RADIUS2)
-            super_proximity_vector2 = beh_func.proximity_vector(position, p4, radius=RADIUS2)
-            # super_proximity_vector3 = beh_func.proximity_vector(position, p5, radius=RADIUS2)
-            # super_proximity_vector4 = beh_func.proximity_vector(position, p6, radius=RADIUS2)
-            #
+            looking_vector3, angle3_vector = beh_func.looking_at_vector(p2, p0, p5)
+            looking_vector4, angle4_vector = beh_func.looking_at_vector(p2, p0, p6)
 
             ## select events of a certain duration
             looking_vector1_last = beh_func.long_duration_events(looking_vector1, MIN_LOOKING)
             looking_vector2_last = beh_func.long_duration_events(looking_vector2, MIN_LOOKING)
-            # looking_vector3_last = beh_func.long_duration_events(looking_vector3, MIN_LOOKING)
-            # looking_vector4_last = beh_func.long_duration_events(looking_vector4, MIN_LOOKING)
+            looking_vector3_last = beh_func.long_duration_events(looking_vector3, MIN_LOOKING)
+            looking_vector4_last = beh_func.long_duration_events(looking_vector4, MIN_LOOKING)
 
-            ##
+            ## proximity vector between mouse position and objects
+            proximity_vector1 = beh_func.proximity_vector(position, p3, radius=RADIUS1)
+            proximity_vector2 = beh_func.proximity_vector(position, p4, radius=RADIUS1)
+            proximity_vector3 = beh_func.proximity_vector(position, p5, radius=RADIUS1)
+            proximity_vector4 = beh_func.proximity_vector(position, p6, radius=RADIUS1)
+
+            ## super proximity vector for mouse position and objects (closer that proximity1)
+            super_proximity_vector1 = beh_func.proximity_vector(position, p3, radius=RADIUS2)
+            super_proximity_vector2 = beh_func.proximity_vector(position, p4, radius=RADIUS2)
+            super_proximity_vector3 = beh_func.proximity_vector(position, p5, radius=RADIUS2)
+            super_proximity_vector4 = beh_func.proximity_vector(position, p6, radius=RADIUS2)
+
             proximity_vector1_last = beh_func.long_duration_events(proximity_vector1, MIN_EXPLORATION)
             proximity_vector2_last = beh_func.long_duration_events(proximity_vector2, MIN_EXPLORATION)
-            # proximity_vector3_last = beh_func.long_duration_events(proximity_vector3, MIN_EXPLORATION)
-            # proximity_vector4_last = beh_func.long_duration_events(proximity_vector4, MIN_EXPLORATION)
+            proximity_vector3_last = beh_func.long_duration_events(proximity_vector3, MIN_EXPLORATION)
+            proximity_vector4_last = beh_func.long_duration_events(proximity_vector4, MIN_EXPLORATION)
 
             super_proximity_vector1_last = beh_func.long_duration_events(super_proximity_vector1, MIN_EXPLORATION)
             super_proximity_vector2_last = beh_func.long_duration_events(super_proximity_vector2, MIN_EXPLORATION)
-            # super_proximity_vector3_last = beh_func.long_duration_events(super_proximity_vector3, MIN_EXPLORATION)
-            # super_proximity_vector4_last = beh_func.long_duration_events(super_proximity_vector4, MIN_EXPLORATION)
+            super_proximity_vector3_last = beh_func.long_duration_events(super_proximity_vector4, MIN_EXPLORATION)
+            super_proximity_vector4_last = beh_func.long_duration_events(super_proximity_vector2, MIN_EXPLORATION)
 
             ## now check for all data points
             for i in range(position.shape[0]):
                 speed_vector[init_trial + i] = speed[i]
                 if position[i, 0] > 0 and position[i, 1] > 0:
-                    closeness = 0
-                    inspection = 0
                     if proximity_vector1_last[i] and not math.isnan(angle1_vector[i]):
                         if looking_vector1_last[i] or super_proximity_vector1_last[i]:
-                            ethogram_vector[init_trial + i] = exploratory_flag1
-                            # corners_vector[init_trial + i] = navigation_flag[selected_i]
-                            closeness = 1
+                            corners_vector[init_trial + i] = exploratory_flag1
                     else:
                         if proximity_vector2_last[i] and not math.isnan(angle2_vector[i]):
                             if looking_vector2_last[i] or super_proximity_vector2_last[i]:
-                                ethogram_vector[init_trial + i] = exploratory_flag2
-                                # corners_vector[init_trial + i] = navigation_flag[selected_j]
-                                closeness = 1
-                            # else:
-                            #     if proximity_vector3_last[i] and not math.isnan(angle3_vector[i]):
-                            #         if looking_vector3_last[i] or super_proximity_vector3_last[i]:
-                            #             corners_vector[init_trial + i] = navigation_flag[non_object_list[0]]
-                            #         else:
-                            #             if proximity_vector4_last[i] and not math.isnan(angle4_vector[i]):
-                            #                 if looking_vector4_last[i] or super_proximity_vector4_last[i]:
-                            #                     corners_vector[init_trial + i] = navigation_flag[non_object_list[1]]
-                    if speed[i] > SPEED_LIM and closeness == 0:
-                        if looking_vector1_last[i] and not looking_vector2_last[i]:
-                                ethogram_vector[init_trial + i] = looking_flag1
-                                inspection = 1
-                        if looking_vector2_last[i] and not looking_vector1_last[i]:
-                                ethogram_vector[init_trial + i] = looking_flag2
-                                inspection = 1
-                        if inspection == 0:
-                            ethogram_vector[init_trial + i] = 2
-                    if speed[i] <= SPEED_LIM and closeness == 0 and inspection == 0:
-                            ethogram_vector[init_trial + i] = 1
+                                corners_vector[init_trial + i] = exploratory_flag2
+                        else:
+                            if proximity_vector3_last[i] and not math.isnan(angle3_vector[i]):
+                                if looking_vector3_last[i] or super_proximity_vector3_last[i]:
+                                    corners_vector[init_trial + i] = exploratory_flag3
+                            else:
+                                if proximity_vector4_last[i] and not math.isnan(angle4_vector[i]):
+                                    if looking_vector4_last[i] or super_proximity_vector4_last[i]:
+                                        corners_vector[init_trial + i] = exploratory_flag4
 
     output_tracking_file = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_day_' + \
-                        f'{day+1}' + '_likelihood_0.75_ethogram.npy'
-    output_tracking_path = category_path + output_tracking_file
-    np.save(output_tracking_path,ethogram_vector)
-
-    output_tracking_file = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_day_' + \
-                         f'{day+1}' + '_likelihood_0.75_object_corners.npy'
+                    f'{day+1}' + '_likelihood_0.75_corners.npy'
     output_tracking_path = category_path + output_tracking_file
     np.save(output_tracking_path,corners_vector)
 
     output_speed_file = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_day_' + \
-                         f'{day+1}' + '_likelihood_0.75_speed.npy'
+                        f'{day+1}' + '_likelihood_0.75_speed.npy'
     output_speed_path = category_path + output_speed_file
     np.save(output_speed_path, speed_vector)
 
