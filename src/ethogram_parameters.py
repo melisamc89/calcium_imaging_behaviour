@@ -124,7 +124,7 @@ def get_parameters(tracking, coordinates1, coordinates2):
 
 
 ## select mouse and session to analyze
-mouse = 56166
+mouse = 32365
 
 ## object positions directory
 current_directory = os.environ['DATA_DIR_LOCAL'] + 'calcium_imaging_behaviour/data/scoring_sheets/'
@@ -133,7 +133,7 @@ if mouse == 32363 or mouse == 32364 or mouse == 32365 or mouse == 32366:
 else:
     mice_directory = '56165-56166/'
 
-for session in [1,2,3]:
+for session in [2,3]:
 
     ## source extracted calcium traces directory
     calcium_directory = os.environ['DATA_DIR_LOCAL'] + 'calcium_imaging_behaviour/data/calcium_activity_day_wise/'
@@ -189,7 +189,8 @@ for session in [1,2,3]:
         trial_duration = np.diff(timeline)
 
         ## create vector to save behaviour
-        parameters_matrix = np.zeros((9,activity.shape[1]))
+        parameters_matrix = np.zeros((11,activity.shape[1]))
+        parameters_matrix[0,:] = np.arange(0,activity.shape[1])
 
         ## load tracking of behaviour
         for trial in range(len(session_trial[day])):
@@ -207,22 +208,24 @@ for session in [1,2,3]:
                 init_trial = int(timeline[trial * 2])
                 end_trial = int(timeline[trial * 2 + 1])
                 duration = np.min((tracking.shape[0], end_trial - init_trial))
+                trial_vector = trial * np.ones_like(tracking[:,0])
 
                 coordinates1 = coor1 * np.ones_like(tracking[:,0:1])
                 coordinates2 = coor2 * np.ones_like(tracking[:,0:1])
                 parameters = get_parameters(tracking, coordinates1, coordinates2)
-                parameters_matrix_trial = np.zeros((9, parameters['cm'].shape[1]))
-                parameters_matrix_trial [0, :] = parameters['cm'][0, :]
-                parameters_matrix_trial [1, :] = parameters['cm'][1, :]
-                parameters_matrix_trial [2, :] = parameters['speed']
-                parameters_matrix_trial [3, :] = parameters['angle1']
-                parameters_matrix_trial [4, :] = parameters['angle2']
-                parameters_matrix_trial [5, :] = parameters['head_direction'][:, 0]
-                parameters_matrix_trial [6, :] = parameters['head_direction'][:, 1]
-                parameters_matrix_trial [7, :] = parameters['dist_obj1']
-                parameters_matrix_trial [8, :] = parameters['dist_obj2']
+                parameters_matrix_trial = np.zeros((10, parameters['cm'].shape[1]))
+                parameters_matrix_trial [0, :] = trial_vector
+                parameters_matrix_trial [1, :] = parameters['cm'][0, :]
+                parameters_matrix_trial [2, :] = parameters['cm'][1, :]
+                parameters_matrix_trial [3, :] = parameters['speed']
+                parameters_matrix_trial [4, :] = parameters['head_direction'][:, 0]
+                parameters_matrix_trial [5, :] = parameters['head_direction'][:, 1]
+                parameters_matrix_trial [6, :] = parameters['dist_obj1']
+                parameters_matrix_trial [7, :] = parameters['dist_obj2']
+                parameters_matrix_trial [8, :] = parameters['angle1']
+                parameters_matrix_trial [9, :] = parameters['angle2']
 
-                parameters_matrix[:,init_trial : init_trial + parameters_matrix_trial.shape[1]] = parameters_matrix_trial
+                parameters_matrix[1:11,init_trial : init_trial + parameters_matrix_trial.shape[1]] = parameters_matrix_trial
 
         output_tracking_file = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_trial_' + \
                             f'{day+1}' + '_likelihood_0.75_ethogram_parameters.npy'

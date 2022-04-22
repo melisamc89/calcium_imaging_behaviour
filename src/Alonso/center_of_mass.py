@@ -22,14 +22,14 @@ from scipy import signal
 mouse = 411857
 
 ## object positions directory
-for session in [1,2,3]:
+for session in [4,5,6]:
     current_directory  = os.environ['DATA_DIR_LOCAL'] +f'{mouse}'+'/'
     ## source extracted calcium traces directory
     calcium_directory = os.environ['DATA_DIR_LOCAL'] +f'{mouse}'+'/' + 'data/calcium_activity_day_wise/'
     ## timeline directory
     timeline_file_dir =os.environ['DATA_DIR_LOCAL'] +f'{mouse}'+'/' + 'data/timeline/'
 
-    objects_file_name = current_directory + 'training_sheet_411857.xlsx'
+    objects_file_name = current_directory + 'training_sheet_' + f'{mouse}' + '.xlsx'
     objects_list_structure = ['condition', 'goal','group','session','drug','subject', 'trial','day', 'loc_1','loc_2']
 
     object_list = pd.read_excel(objects_file_name)
@@ -97,7 +97,7 @@ for session in [1,2,3]:
                 cm[:, 0] = signal.medfilt(x_new, 7)
                 cm[:, 1] = signal.medfilt(y_new, 7)
 
-                cm_vector[init_trial : init_trial + cm.shape[0],:] = cm
+                cm_vector[init_trial : init_trial + cm.shape[0],:] = cm[0:cm_vector[init_trial : init_trial + cm.shape[0],:].shape[0],:]
 
         output_tracking_file = 'mouse_' + f'{mouse}' + '_session_' + f'{session}' + '_day_' + \
                                f'{day + 1}' + '_likelihood_0.75.npy'

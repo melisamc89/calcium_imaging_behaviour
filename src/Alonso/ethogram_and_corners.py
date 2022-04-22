@@ -101,7 +101,7 @@ def angle_between(v1, v2):
 
 
 ## select mouse and session to analyze
-mouse = 411857
+mouse = 401714
 MIN_EXPLORATION = 1 # frames taking into account videos are already in 10fps
 MIN_LOOKING = 1   # frames taking into account videos are already in 10fps
 
@@ -114,7 +114,7 @@ SPEED_LIM = 5   # speed in pixels
 current_directory = os.environ['DATA_DIR_LOCAL'] + f'{mouse}' + '/'
 
 # This table conteins all mice info
-objects_file_name = current_directory + 'training_sheet_411857.xlsx'
+objects_file_name = current_directory + 'training_sheet_401714.xlsx'
 objects_list_structure = ['condition', 'goal', 'group', 'session', 'drug', 'subject', 'trial', 'day', 'loc_1', 'loc_2']
 
 object_list = pd.read_excel(objects_file_name)
@@ -123,7 +123,7 @@ object_list = pd.DataFrame(object_list, columns=objects_list_structure)
 coordinates = [np.array([800, 250]), np.array([350, 200]), np.array([350, 700]), np.array([800, 700])]
 objects = ['LR', 'LL', 'UR', 'UL']
 
-for session in [1,2,3]:
+for session in [1,2]:
 
     ## source extracted calcium traces directory
     calcium_directory = os.environ['DATA_DIR_LOCAL'] +f'{mouse}'+'/' + 'data/calcium_activity_day_wise/'

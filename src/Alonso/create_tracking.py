@@ -17,7 +17,7 @@ import math
 
 ## select mouse and session to analyze
 mouse = 411857
-session = 3
+session = 6
 ## name data excel file where list of file names is located
 file_names_file = os.environ['PROJECT_DIR_LOCAL'] + 'calcium_imaging_paths_behaviour_alonso.xlsx'
 
